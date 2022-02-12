@@ -1,0 +1,59 @@
+- type: plain_def
+  values:
+    - "UJ_MASK": 32'h0000007f
+      "R_MASK":  32'h00001234
+
+- type: enum
+  values:
+    - "LUI_IDX"
+    - "AUIPC_IDX"
+    - "LODS_IDX"
+
+- type: mux
+  mux_name: "testmux"
+  signals:
+    - "line1"
+    - "line2"
+    - "line3"
+
+- type: control_bus
+  muxes:
+    - mux_name: "WRB_REGF_MUX"
+      signals:
+        - "ALUOUT_SEL"
+        - "PC_P_4_SEL"
+        - "DATAMEM_SEL"
+
+    - mux_name: "ALU_SRC1_MUX"
+      signals:
+        - "U_IMM_SEL"
+        - "RS1_SEL"
+
+  encoded_signals:
+    - encode_name: "BRANCH_ENC"
+      signals:
+        - "NO_BRANCH_SEL":  0
+        - "JAL_SEl":        2
+      default:
+        - "NO_BRANCH_SEL"
+
+  control_signals:
+    - "rs1_active"
+    - "rs2_active"
+    - "regwrite"
+    - "cond_branch"
+  
+  operation_codes:
+    "LUI_CTRL":
+      - "rs1_active": 1
+        "regwrite": 1
+        "WRB_REGF_MUX": "DATAMEM_SEL"
+
+    "AUIPC_CTRL":
+      - "rs1_active": 1
+        "regwrite": 1
+        "cond_branch": 1
+        "ALU_SRC1_MUX": "RS1_SEL"
+
+
+
