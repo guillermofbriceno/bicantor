@@ -1,7 +1,7 @@
 { pkgs ? import <nixpkgs> {} }:
 let
   python-with-my-packages = pkgs.python3.withPackages (p: with p; [
-    # none yet
+    pyyaml
   ]);
 in
 pkgs.mkShell {
@@ -13,6 +13,7 @@ pkgs.mkShell {
     pkgs.yosys 
     pkgs.trellis 
     pkgs.verilog
+    pkgs.ctags
 
   ];
 

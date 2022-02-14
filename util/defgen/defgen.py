@@ -42,8 +42,13 @@ def enum(obj):
     return writelist(defs)
 
 def mux(obj):
-    print("plain mux not supported")
-    return ""
+    num_ctrl_bits = math.ceil( math.log2( len(obj["signals"]) ) )
+
+    def_dict = {}
+    def_dict[obj["mux_name"]] = f"{num_ctrl_bits}:0"
+    def_dict.update( enum_list(obj["signals"]) )
+    defs = define(def_dict)
+    return writelist(defs)
 
 def control_bus(top_obj):
     bus_idx = 0

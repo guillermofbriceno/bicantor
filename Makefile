@@ -1,6 +1,9 @@
 BUILD = ./build
 UTIL = ./util
-SRCS = ./src
+
+SRCS = ./src/core
+#SRCS := ./src/cache
+
 TB = ./tests
 
 TESTBENCH_VVP = $(BUILD)/uut.vvp
@@ -10,18 +13,26 @@ JUPITER_HEX = $(BUILD)/jupiter_asm.hex
 JUPITER_MCH = $(BUILD)/machine.m
 JUPITER_ASM = $(UTIL)/asm/assembly.s
 
-.PHONY: asm test clean
+DEFYAML = ./src/defs.yaml
+DEFVERI = ./src/defs.v
 
-$(TESTBENCH_VVP): $(SRCS) $(TB)
+.PHONY: clean
+
+$(TESTBENCH_VVP): $(SRCS) $(TB) $(DEFSVER)
 	mkdir -p build/
-	iverilog -o $(TESTBENCH_VVP) $(TESTBENCH_CORE) -I $(SRCS)
+	iverilog -o $@ $(TESTBENCH_CORE) -I $(SRCS) -I $(DEFVERI)
+	vvp $@
 
 $(JUPITER_HEX): $(JUPITER_ASM)
-	steam-run jupiter $(JUPITER_ASM) --dump-code $(JUPITER_MCH)
-	python3 $(UTIL)/asm/format_from_jupiter.py $(JUPITER_MCH) > $(JUPITER_HEX)
+	steam-run jupiter $^ --dump-code $(JUPITER_MCH)
+	python3 $(UTIL)/asm/format_from_jupiter.py $(JUPITER_MCH) > $@
 
-test: $(TESTBENCH_VVP)
-	vvp $(TESTBENCH_VVP)
+$(DEFVERI): $(DEFYAML)
+	python3 $(UTIL)/defgen/defgen.py $^ $@
+
+defs: $(DEFVERI)
+
+test: $(JUPITER_HEX) $(TESTBENCH_VVP) 
 
 asm: $(JUPITER_HEX)
 
