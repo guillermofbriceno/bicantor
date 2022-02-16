@@ -61,6 +61,9 @@ def control_bus(top_obj):
     def type(obj):
         return []
 
+    def name(obj):
+        return []
+
     def muxes(obj):
         nonlocal bus_idx
         nonlocal signals
@@ -91,9 +94,10 @@ def control_bus(top_obj):
     def control_signals(obj):
         nonlocal bus_idx
         nonlocal signals
-        signals.update(enum_list(obj, offset=bus_idx))
+        control_signals = enum_list(obj, offset=bus_idx)
+        signals.update(control_signals)
         bus_idx += len(obj)
-        return []
+        return define(control_signals)
 
     def operation_codes(obj):
         nonlocal signals
@@ -102,17 +106,22 @@ def control_bus(top_obj):
         for opcode in obj:
             ctrl_bus = "0" * (bus_idx)
             for sig_name, sig_val_var in obj[opcode][0].items():
+                if sig_name == "opcode":
+                    opcode_defs[f"{opcode}_OP"] = sig_val_var
+                    continue
+
                 sig_idx = signals[sig_name]
                 sig_val = values[str(sig_val_var)]
                 ctrl_bus = bus_write(ctrl_bus, sig_idx, sig_val)
 
-            opcode_defs[opcode] = fmt_binary(ctrl_bus)
+            opcode_defs[f"{opcode}_CTRL"] = fmt_binary(ctrl_bus)
 
         return define(opcode_defs)
 
     control_types = {
             "type": type,
             "muxes": muxes,
+            "name": name,
             "encoded_signals": encoded_signals,
             "control_signals": control_signals,
             "operation_codes": operation_codes
@@ -122,6 +131,7 @@ def control_bus(top_obj):
     for k, v in top_obj.items():
         defs += control_types[k](v)
 
+    defs += define({top_obj["name"]: f"{bus_idx-1}:0"})
     #print("\nsignals:", signals)
     return writelist(defs)
 

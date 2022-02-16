@@ -1,6 +1,6 @@
 - type: plain_def
   values:
-    - "TEMP0": 32'h0000007f
+    - "NOP": 32'b0
       "TEMP1":  32'h00001234
 
 - type: enum
@@ -17,34 +17,30 @@
     - "TEMP6"
 
 - type: control_bus
+  name: "CTRL_BUS"
   muxes:
-    - mux_name: "WRB_REGF_MUX"
-      signals:
-        - "ALUOUT_SEL"
-        - "PC_P_4_SEL"
-        - "DATAMEM_SEL"
-
     - mux_name: "ALU_SRC1_MUX"
       signals:
         - "U_IMM_SEL"
         - "RS1_SEL"
 
   control_signals:
-    - "rs1_active"
-    - "rs2_active"
-    - "regwrite"
-    - "cond_branch"
+    - "RS1_ACTIVE"
+    - "RS2_ACTIVE"
+    - "REGWRITE"
+    - "COND_BRANCH"
   
   operation_codes:
-    "LUI_CTRL":
-      - "rs1_active": 1
-        "regwrite": 1
-        "WRB_REGF_MUX": "DATAMEM_SEL"
+    "ALUI":
+      - opcode:         "1101100"
+        "RS1_ACTIVE":   1
+        "REGWRITE":     1
 
-    "AUIPC_CTRL":
-      - "rs1_active": 1
-        "regwrite": 1
-        "cond_branch": 1
+    "ALUR":
+      - opcode:         "0100011"
+        "RS1_ACTIVE":   1
+        "RS2_ACTIVE":   1
+        "REGWRITE":     1
         "ALU_SRC1_MUX": "RS1_SEL"
 
 

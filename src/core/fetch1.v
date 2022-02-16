@@ -7,9 +7,13 @@ module fetch1
     output [31:0] pc_o
 );
 
-    reg [31:0]      pc = 0;
-    reg [31:0]      pc_mux_out;
+    // pc starts one step ahead to account for 
+    // pc->imem buffer start state, where both
+    // the pc and the buffer are zero at startup
+    reg [31:0]      pc = 8;
+    reg [31:0]      pc_mux_out = 0;
     reg [`PC_MUX]   pc_mux = `PC_MUX_P8;
+    //reg [`PC_MUX]   pc_mux = 2;
 
     assign pc_o = pc;
 

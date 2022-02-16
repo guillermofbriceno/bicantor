@@ -30,12 +30,11 @@ module core_tb ();
         //    $dumpvars(0, INSTMEM.instmemory[i]);
         //end
 
-        #41.665;
         for (i=0; i < 5000; i=i+1) begin
+                #41.665;
                 clock = 1;
                 #41.665;
                 clock = 0;
-                #41.665;
         end
 
     end

@@ -18,7 +18,7 @@ DEFVERI = ./src/defs.v
 
 .PHONY: clean
 
-$(TESTBENCH_VVP): $(SRCS) $(TB) $(DEFSVER)
+$(TESTBENCH_VVP): $(SRCS) $(TB) $(DEFVERI)
 	mkdir -p build/
 	iverilog -o $@ $(TESTBENCH_CORE) -I $(SRCS) -I $(DEFVERI)
 	vvp $@
