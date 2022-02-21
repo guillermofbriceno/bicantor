@@ -107,7 +107,7 @@ def control_bus(top_obj):
             ctrl_bus = "0" * (bus_idx)
             for sig_name, sig_val_var in obj[opcode][0].items():
                 if sig_name == "opcode":
-                    opcode_defs[f"{opcode}_OP"] = sig_val_var
+                    opcode_defs[f"{opcode}_OP"] = fmt_binary(sig_val_var)
                     continue
 
                 sig_idx = signals[sig_name]

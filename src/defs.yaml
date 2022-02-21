@@ -16,6 +16,15 @@
     - "TEMP5"
     - "TEMP6"
 
+- type: mux
+  mux_name: "BYPASS_MUX"
+  signals:
+    - "BYPASS_NONE"
+    - "BYPASS_LSU0"
+    - "BYPASS_LSU1"
+    - "BYPASS_WB0"
+    - "BYPASS_WB1"
+
 - type: control_bus
   name: "CTRL_BUS"
   muxes:
@@ -32,16 +41,21 @@
   
   operation_codes:
     "ALUI":
-      - opcode:         "1101100"
+      - opcode:         "0010011"
         "RS1_ACTIVE":   1
         "REGWRITE":     1
 
     "ALUR":
-      - opcode:         "0100011"
+      - opcode:         "0110011"
         "RS1_ACTIVE":   1
         "RS2_ACTIVE":   1
         "REGWRITE":     1
         "ALU_SRC1_MUX": "RS1_SEL"
+
+    "LUI":
+      - opcode:         "0110111"
+        "REGWRITE":     1
+        "ALU_SRC1_MUX": "U_IMM_SEL"
 
 
 

@@ -25,15 +25,19 @@ module core_tb ();
     initial begin
         $dumpfile("./build/uut.vcd");
         $dumpvars(0, core_tb);
+        $dumpvars(0, CORE.DECODE);
+        for (i = 0; i < 32; i = i + 1) begin
+            $dumpvars(0, CORE.ISSUE.REGFILE.registers[i]);
+        end
         //$dumpvars(0, INSTMEM.instmemory);
         //for(i=0; i < 1024; i=i+1) begin
         //    $dumpvars(0, INSTMEM.instmemory[i]);
         //end
 
         for (i=0; i < 5000; i=i+1) begin
-                #41.665;
+                #1;
                 clock = 1;
-                #41.665;
+                #1;
                 clock = 0;
         end
 

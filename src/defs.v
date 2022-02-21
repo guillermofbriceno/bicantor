@@ -17,9 +17,11 @@
 `define RS2_ACTIVE 2
 `define REGWRITE 3
 `define COND_BRANCH 4
-`define ALUI_OP 1101100
+`define ALUI_OP 7'b0010011
 `define ALUI_CTRL 5'b01010
-`define ALUR_OP 0100011
+`define ALUR_OP 7'b0110011
 `define ALUR_CTRL 5'b01111
+`define LUI_OP 7'b0110111
+`define LUI_CTRL 5'b01000
 `define CTRL_BUS 4:0
 

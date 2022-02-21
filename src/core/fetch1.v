@@ -13,7 +13,6 @@ module fetch1
     reg [31:0]      pc = 8;
     reg [31:0]      pc_mux_out = 0;
     reg [`PC_MUX]   pc_mux = `PC_MUX_P8;
-    //reg [`PC_MUX]   pc_mux = 2;
 
     assign pc_o = pc;
 
