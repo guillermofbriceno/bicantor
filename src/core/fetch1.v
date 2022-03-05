@@ -2,9 +2,12 @@
 
 module fetch1
 (
-    input clock_i,
+    input               clock_i,
 
-    output [31:0] pc_o
+    input               pc_we_i,
+
+    output      [31:0]  pc_o,
+    output reg          stall_o = 0
 );
 
     // pc starts one step ahead to account for 
@@ -17,7 +20,8 @@ module fetch1
     assign pc_o = pc;
 
     always @(posedge clock_i) begin
-        pc <= pc_mux_out;
+        if (pc_we_i)
+            pc <= pc_mux_out;
     end
 
     always @(*) begin

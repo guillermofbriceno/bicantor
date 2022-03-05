@@ -3,6 +3,10 @@
     - "NOP": 32'b0
       "TEMP1":  32'h00001234
 
+      "RS1_ENC": "19:15"
+      "RS2_ENC": "24:20"
+      "RD_ENC" : "11:07"
+
 - type: enum
   values:
     - "TEMP2"
@@ -33,11 +37,21 @@
         - "U_IMM_SEL"
         - "RS1_SEL"
 
+    - mux_name: "ALU_SRC2_MUX"
+      signals:
+        - "I_IMM_SEL"
+        - "S_IMM_SEL"
+        - "PC_SEL"
+        - "RS2_SEL"
+
   control_signals:
     - "RS1_ACTIVE"
     - "RS2_ACTIVE"
     - "REGWRITE"
+    - "SLOT0_ONLY"
     - "COND_BRANCH"
+    - "ISSUE_PRI"
+    - "ISSUE_SLOT"
   
   operation_codes:
     "ALUI":

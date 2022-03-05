@@ -3,10 +3,10 @@
 module issue
 (
     input              clock_i,
+
     input  wire [31:0] inst0_i,
     input  wire [31:0] inst1_i,
 
-    // might not be needed
     input  wire [`CTRL_BUS] ctrl0_i,
     input  wire [`CTRL_BUS] ctrl1_i,
 
@@ -22,21 +22,64 @@ module issue
     output wire [31:0] rs2_data0_o,
 
     output wire [31:0] rs1_data1_o,
-    output wire [31:0] rs2_data1_o
+    output wire [31:0] rs2_data1_o,
+
+    output wire        issue0_special_stall_o,
+    output wire        issue1_special_stall_o,
+
+    output  wire [`CTRL_BUS] issued_ctrl0_o,
+    output  wire [`CTRL_BUS] issued_ctrl1_o,
+    output  wire [31:0]      issued_inst0_o,
+    output  wire [31:0]      issued_inst1_o
 );
+
+    wire                    issue0_sw_req;
+    wire                    issue1_sw_req;
+    wire                    issue0_dnsw_req;
+    wire                    issue1_dnsw_req;
+    wire                    switch;
+    wire                    inst_dep;
+
+    /*
+    *  Issue Logic
+    */
+    assign inst_dep =   ( (inst1_i[`RS1_ENC] == inst0_i[`RD_ENC])   &&
+                          (ctrl1_i[`RS1_ACTIVE]                 )   &&
+                          (inst1_i[`RS1_ENC] != 0               )   ||
+                          (inst1_i[`RS2_ENC] == inst0_i[`RD_ENC])   &&
+                          (ctrl1_i[`RS2_ACTIVE]                 )   &&
+                          (inst1_i[`RS2_ENC] != 0               ) ) &&
+                          (ctrl0_i[`REGWRITE] == 1              );
+    
+    assign issue0_sw_req    = ctrl0_i[`ISSUE_PRI] && (ctrl0_i[`ISSUE_SLOT] == 1);
+    assign issue0_dnsw_req  = ctrl0_i[`ISSUE_PRI] && (ctrl0_i[`ISSUE_SLOT] == 0);
+
+    assign issue1_sw_req    = ctrl1_i[`ISSUE_PRI] && (ctrl1_i[`ISSUE_SLOT] == 0);
+    assign issue1_dnsw_req  = ctrl1_i[`ISSUE_PRI] && (ctrl1_i[`ISSUE_SLOT] == 1);
+
+    assign issue0_special_stall_o = 0;
+    assign issue1_special_stall_o = inst_dep || (issue1_dnsw_req && issue0_dnsw_req) || (issue0_dnsw_req && issue1_sw_req);
+
+    assign switch = issue0_sw_req || (!issue0_dnsw_req && issue1_sw_req && !inst_dep);
+    
+    assign issued_inst0_o = (switch) ? inst1_i : inst0_i;
+    assign issued_inst1_o = (switch) ? inst0_i : inst1_i;
+    assign issued_ctrl0_o = (switch) ? ctrl1_i : ctrl0_i;
+    assign issued_ctrl1_o = (switch) ? ctrl0_i : ctrl1_i;
+
 
 
     regfile REGFILE (
         .clock_i(clock_i),
 
-        .A_rs1_addr_i(inst0_i[19:15]),
-        .A_rs2_addr_i(inst0_i[24:20]),
+        .A_rs1_addr_i(issued_inst0_o[`RS1_ENC]),
+        .A_rs2_addr_i(issued_inst0_o[`RS2_ENC]),
         .A_rd_addr_i(rd_addr0_i),
         .A_rd_data_i(rd_data0_i),
         .A_rd_write_i(rd_write0_i),
 
-        .B_rs1_addr_i(inst1_i[19:15]),
-        .B_rs2_addr_i(inst1_i[24:20]),
+        .B_rs1_addr_i(issued_inst1_o[`RS1_ENC]),
+        .B_rs2_addr_i(issued_inst1_o[`RS2_ENC]),
         .B_rd_addr_i(rd_addr1_i),
         .B_rd_data_i(rd_data1_i),
         .B_rd_write_i(rd_write1_i),
