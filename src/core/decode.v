@@ -10,7 +10,7 @@ module decode
     output  wire [31:0] inst1_o,
     output  wire [`CTRL_BUS] ctrl0_o,
     output  wire [`CTRL_BUS] ctrl1_o,
-    output              stall_o
+    output  reg              stall_o = 0
 );
     
     assign inst0_o = inst0_i;

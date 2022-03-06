@@ -70,7 +70,7 @@ module pipeline
     assign backend_we_w  = ! ( f1_stall_i || f2_stall_i || dec_stall_i || exec_stall_i || mem_stall_i || wb_stall_i );
     assign frontend_we_w = ( (backend_we_w) && (!issue0_stall_w) && (!issue1_stall_w) );
 
-    assign pc_we_o = frontend_we_w;
+    assign f1_pc_we_o = frontend_we_w;
 
     /*
     *  F1 / F2 or MEM Buffer
@@ -135,7 +135,7 @@ module pipeline
     */
    always @(posedge clock_i) begin
         // Exec 0
-        if (issue1_stall_w) begin
+        if (issue0_stall_w) begin
             inst0_exec_o        <= 0;
             ctrl0_exec_o        <= 0;
             rs1_data0_exec_o    <= 0;
@@ -148,7 +148,7 @@ module pipeline
         end
 
         // Exec 1
-        if (issue0_stall_w) begin
+        if (issue1_stall_w) begin
             inst1_exec_o        <= 0;
             ctrl1_exec_o        <= 0;
             rs1_data1_exec_o    <= 0;
