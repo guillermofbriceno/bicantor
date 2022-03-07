@@ -1,4 +1,4 @@
-`include "../defs.v"
+`include "src/defs.v"
 
 module decoder
 (

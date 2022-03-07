@@ -1,4 +1,4 @@
-module inst_mem 
+module simple_imem 
 #(
     parameter loadfile = "build/jupiter_asm.hex"
 )

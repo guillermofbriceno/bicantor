@@ -1,8 +1,4 @@
-`include "pipeline.v"
-`include "fetch1.v"
-`include "regfile.v"
-`include "issue.v"
-`include "decode.v"
+`include "src/defs.v"
 
 module core
 (
@@ -118,11 +114,11 @@ module core
 
     // wb input wires
     wire [04:0] rd_addr0_wb_iw;
-    wire [31:0] rd_data0_wb_iw;
+    //writeback rd_data0_wb_ow;
     wire        rd_write0_wb_iw;
 
     wire [04:0] rd_addr1_wb_iw;
-    wire [31:0] rd_data1_wb_iw;
+    //writeback rd_data1_wb_ow;
     wire        rd_write1_wb_iw;
 
     issue ISSUE(
@@ -135,11 +131,11 @@ module core
         .ctrl1_i                (ctrl1_issue_iw),
 
         .rd_addr0_i             (rd_addr0_wb_iw),
-        .rd_data0_i             (rd_data0_wb_iw),
+        .rd_data0_i             (rd_data0_wb_ow),
         .rd_write0_i            (rd_write0_wb_iw),
 
         .rd_addr1_i             (rd_addr1_wb_iw),
-        .rd_data1_i             (rd_data1_wb_iw),
+        .rd_data1_i             (rd_data1_wb_ow),
         .rd_write1_i            (rd_write1_wb_iw),
 
         .rs1_data0_o            (rs1_data0_ow),
@@ -148,8 +144,8 @@ module core
         .rs1_data1_o            (rs1_data1_ow),
         .rs2_data1_o            (rs2_data1_ow),
 
-        .issue0_special_stall_o(issue0_special_stall_ow),
-        .issue1_special_stall_o(issue1_special_stall_ow),
+        .issue0_special_stall_o (issue0_special_stall_ow),
+        .issue1_special_stall_o (issue1_special_stall_ow),
         .issued_ctrl0_o         (issued_ctrl0_ow),
         .issued_ctrl1_o         (issued_ctrl1_ow),
         .issued_inst0_o         (issued_inst0_ow),
@@ -169,6 +165,7 @@ module core
 
 
     // pipe
+
     wire [31:0] inst0_exec_iw;
     wire [31:0] inst1_exec_iw;
     wire [`CTRL_BUS] ctrl0_exec_iw;
@@ -177,5 +174,48 @@ module core
     wire [31:0] rs2_data0_exec_iw;
     wire [31:0] rs1_data1_exec_iw;
     wire [31:0] rs2_data1_exec_iw;
+
+    execute EXECUTE(
+        .inst0_i                (inst0_exec_iw),
+        .inst1_i                (inst1_exec_iw),
+        .ctrl0_i                (ctrl0_exec_iw),
+        .ctrl1_i                (ctrl1_exec_iw),
+        .pc_0_i                 (pc_exec0_iw),
+        .pc_1_i                 (pc_exec1_iw),
+        .bypass_lsu0_i          (bypassed_in1_0_iw),
+        .bypass_wb0_i           (bypassed_in2_0_iw),
+        .bypass_lsu1_i          (bypassed_in1_1_iw),
+        .bypass_wb1_i           (bypassed_in2_1_iw),
+
+        .alu0_o                 (alu0_exec_ow),
+        .alu1_o                 (alu1_exec_ow)
+    );
+
+    wire [31:0]         alu0_exec_ow;
+    wire [31:0]         alu1_exec_ow;
+
+    // pipe
+
+    wire [31:0] alu_out_lsu0_iw;
+    wire [31:0] alu_out_lsu1_iw;
+
+    lsu LSU(
+
+    );
+
+    // ow
+
+    // pipe
+
+    // iw 
+
+    writeback WRITEBACK(
+
+    );
+
+    // ow
+    wire [31:0] rd_data0_wb_ow;
+
+    wire [31:0] rd_data1_wb_ow;
 
 endmodule

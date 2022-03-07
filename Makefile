@@ -20,7 +20,7 @@ DEFVERI = ./src/defs.v
 
 $(TESTBENCH_VVP): $(SRCS) $(TB) $(DEFVERI)
 	mkdir -p build/
-	iverilog -o $@ $(TESTBENCH_CORE) -I $(SRCS) -I $(DEFVERI)
+	iverilog -o $@ $(TESTBENCH_CORE) -y $(SRCS) -I $(DEFVERI)
 	vvp $@
 
 $(JUPITER_HEX): $(JUPITER_ASM)

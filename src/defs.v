@@ -3,6 +3,11 @@
 `define RS1_ENC 19:15
 `define RS2_ENC 24:20
 `define RD_ENC 11:07
+`define F7_ENC 31:25
+`define F3_ENC 14:12
+`define U_IMM_ENC 14:12
+`define I_IMM_ENC 31:20
+`define S_IMM_ENC(in) {in[31:25], in[11:7]}
 
 `define TEMP2 0
 `define TEMP3 1
@@ -31,10 +36,10 @@
 `define RS1_ACTIVE 3
 `define RS2_ACTIVE 4
 `define REGWRITE 5
-`define SLOT0_ONLY 6
-`define COND_BRANCH 7
-`define ISSUE_PRI 8
-`define ISSUE_SLOT 9
+`define COND_BRANCH 6
+`define ISSUE_PRI 7
+`define ISSUE_SLOT 8
+`define FUNCT7_SEL 9
 `define ALUI_OP 7'b0010011
 `define ALUI_CTRL 10'b0000101000
 `define ALUR_OP 7'b0110011

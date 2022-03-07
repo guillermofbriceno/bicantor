@@ -6,6 +6,11 @@
       "RS1_ENC": "19:15"
       "RS2_ENC": "24:20"
       "RD_ENC" : "11:07"
+      "F7_ENC" : "31:25"
+      "F3_ENC" : "14:12"
+      "U_IMM_ENC" : "14:12"
+      "I_IMM_ENC" : "31:20"
+      "S_IMM_ENC(in)" : "{in[31:25], in[11:7]}"
 
 - type: enum
   values:
@@ -48,10 +53,10 @@
     - "RS1_ACTIVE"
     - "RS2_ACTIVE"
     - "REGWRITE"
-    - "SLOT0_ONLY"
     - "COND_BRANCH"
     - "ISSUE_PRI"
     - "ISSUE_SLOT"
+    - "FUNCT7_SEL"
   
   operation_codes:
     "ALUI":

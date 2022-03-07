@@ -1,97 +1,100 @@
 module bypass
 (
-    input           r0_1,
-    input           r0_2,
-    input [04:0]    a0_1,
-    input [04:0]    a0_2,
+    input       [31:0]  rs1_exec0_i,
+    input       [31:0]  rs2_exec0_i,
+    input       [31:0]  bypass_lsu0_i,
+    input       [31:0]  bypass_wb0_i,
 
-    input           r1_1,
-    input           r1_2,
-    input [04:0]    a1_1,
-    input [04:0]    a1_2
+    input       [31:0]  rs1_exec1_i,
+    input       [31:0]  rs2_exec1_i,
+    input       [31:0]  bypass_lsu1_i,
+    input       [31:0]  bypass_wb1_i,
+    
+    input               r0_1_i,
+    input               r0_2_i,
+    input       [04:0]  a0_1_i,
+    input       [04:0]  a0_2_i,
 
-    input           wm0
-    input [04:0]    am0
+    input               r1_1_i,
+    input               r1_2_i,
+    input       [04:0]  a1_1_i,
+    input       [04:0]  a1_2_i,
 
-    input           wm1
-    input [04:0]    am1
+    input               wm0_i,
+    input       [04:0]  am0_i,
 
-    input           ww0
-    input [04:0]    aw0
+    input               wm1_i,
+    input       [04:0]  am1_i,
 
-    input           ww1
-    input [04:0]    aw1
+    input               ww0_i,
+    input       [04:0]  aw0_i,
 
-
-    output [`BYPASS_MUX] mux0_src1;
-    output [`BYPASS_MUX] mux0_src2;
-    output [`BYPASS_MUX] mux1_src1;
-    output [`BYPASS_MUX] mux1_src2;
+    input               ww1_i,
+    input       [04:0]  aw1_i,
+    
+    output reg  [31:0]  bypassed_in1_0_o,
+    output reg  [31:0]  bypassed_in2_0_o,
+    output reg  [31:0]  bypassed_in1_1_o,
+    output reg  [31:0]  bypassed_in2_1_o
 
 );
 
-    reg [`BYPASS_MUX] mux0_src1_r;
-    reg [`BYPASS_MUX] mux0_src2_r;
-    reg [`BYPASS_MUX] mux1_src1_r;
-    reg [`BYPASS_MUX] mux1_src2_r;
-
-    assign mux0_src1 = r0_1 ? mux0_src1_r : 0;
-    assign mux0_src2 = r0_2 ? mux0_src2_r : 0;
-    assign mux1_src1 = r1_1 ? mux1_src1_r : 0;
-    assign mux1_src2 = r1_2 ? mux1_src2_r : 0;
-
     always @(*) begin
         // mux0_src1
-        if          (wm0 & (a0_1 == am0) & (am0 != 0))
-            mux0_src1_r <= `BYPASS_LSU0;
-        end else if (ww0 & (a0_1 == aw0) & (aw0 != 0))
-            mux0_src1_r <= `BYPASS_WB0;
-        end else if (wm1 & (a0_1 == am1) & (am1 != 0))
-            mux0_src1_r <= `BYPASS_LSU1;
-        end else if (ww1 & (a0_1 == aw1) & (aw1 != 0))
-            mux0_src1_r <= `BYPASS_WB1;
-        end else
-            mux0_src1_r <= `BYPASS_NONE;
-        end
+        if          (!r0_1_i)
+            bypassed_in1_0_o <= rs1_exec0_i;
+        else if (wm0_i && (a0_1_i == am0_i) && (am0_i != 0))
+            bypassed_in1_0_o <= bypass_lsu0_i;
+        else if (ww0_i && (a0_1_i == aw0_i) && (aw0_i != 0))
+            bypassed_in1_0_o <= bypass_wb0_i;
+        else if (wm1_i && (a0_1_i == am1_i) && (am1_i != 0))
+            bypassed_in1_0_o <= bypass_lsu1_i;
+        else if (ww1_i && (a0_1_i == aw1_i) && (aw1_i != 0))
+            bypassed_in1_0_o <= bypass_wb1_i;
+        else
+            bypassed_in1_0_o <= rs1_exec0_i;
 
         // mux0_src2
-        if          (wm0 & (a0_2 == am0) & (am0 != 0))
-            mux0_src2_r <= `BYPASS_LSU0;
-        end else if (ww0 & (a0_2 == aw0) & (aw0 != 0))
-            mux0_src2_r <= `BYPASS_WB0;
-        end else if (wm1 & (a0_2 == am1) & (am1 != 0))
-            mux0_src2_r <= `BYPASS_LSU1;
-        end else if (ww1 & (a0_2 == aw1) & (aw1 != 0))
-            mux0_src2_r <= `BYPASS_WB1;
-        end else
-            mux0_src2_r <= `BYPASS_NONE;
-        end
+        if          (!r0_2_i)
+            bypassed_in2_0_o <= rs2_exec0_i;
+        else if (wm0_i && (a0_2_i == am0_i) && (am0_i != 0))
+            bypassed_in2_0_o <= bypass_lsu0_i;
+        else if (ww0_i && (a0_2_i == aw0_i) && (aw0_i != 0))
+            bypassed_in2_0_o <= bypass_wb0_i;
+        else if (wm1_i && (a0_2_i == am1_i) && (am1_i != 0))
+            bypassed_in2_0_o <= bypass_lsu1_i;
+        else if (ww1_i && (a0_2_i == aw1_i) && (aw1_i != 0))
+            bypassed_in2_0_o <= bypass_wb1_i;
+        else
+            bypassed_in2_0_o <= rs2_exec0_i;
 
         // mux1_src1
-        if          (wm0 & (a1_1 == am0) & (am0 != 0))
-            mux1_src1_r <= `BYPASS_LSU0;
-        end else if (ww0 & (a1_1 == aw0) & (aw0 != 0))
-            mux1_src1_r <= `BYPASS_WB0;
-        end else if (wm1 & (a1_1 == am1) & (am1 != 0))
-            mux1_src1_r <= `BYPASS_LSU1;
-        end else if (ww1 & (a1_1 == aw1) & (aw1 != 0))
-            mux1_src1_r <= `BYPASS_WB1;
-        end else
-            mux1_src1_r <= `BYPASS_NONE;
-        end
+        if          (!r1_1_i)
+            bypassed_in1_1_o <= rs1_exec1_i;
+        else if (wm0_i && (a1_1_i == am0_i) && (am0_i != 0))
+            bypassed_in1_1_o <= bypass_lsu0_i;
+        else if (ww0_i && (a1_1_i == aw0_i) && (aw0_i != 0))
+            bypassed_in1_1_o <= bypass_wb0_i;
+        else if (wm1_i && (a1_1_i == am1_i) && (am1_i != 0))
+            bypassed_in1_1_o <= bypass_lsu1_i;
+        else if (ww1_i && (a1_1_i == aw1_i) && (aw1_i != 0))
+            bypassed_in1_1_o <= bypass_wb1_i;
+        else
+            bypassed_in1_1_o <= rs1_exec1_i;
 
         // mux1_src2
-        if          (wm0 & (a1_2 == am0) & (am0 != 0))
-            mux1_src2_r <= `BYPASS_LSU0;
-        end else if (ww0 & (a1_2 == aw0) & (aw0 != 0))
-            mux1_src2_r <= `BYPASS_WB0;
-        end else if (wm1 & (a1_2 == am1) & (am1 != 0))
-            mux1_src2_r <= `BYPASS_LSU1;
-        end else if (ww1 & (a1_2 == aw1) & (aw1 != 0))
-            mux1_src2_r <= `BYPASS_WB1;
-        end else
-            mux1_src2_r <= `BYPASS_NONE;
-        end
+        if          (!r1_2_i)
+            bypassed_in2_1_o <= rs2_exec1_i;
+        else if (wm0_i && (a1_2_i == am0_i) && (am0_i != 0))
+            bypassed_in2_1_o <= bypass_lsu0_i;
+        else if (ww0_i && (a1_2_i == aw0_i) && (aw0_i != 0))
+            bypassed_in2_1_o <= bypass_wb0_i;
+        else if (wm1_i && (a1_2_i == am1_i) && (am1_i != 0))
+            bypassed_in2_1_o <= bypass_lsu1_i;
+        else if (ww1_i && (a1_2_i == aw1_i) && (aw1_i != 0))
+            bypassed_in2_1_o <= bypass_wb1_i;
+        else
+            bypassed_in2_1_o <= rs2_exec1_i;
     end
 
 endmodule

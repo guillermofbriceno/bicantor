@@ -1,6 +1,3 @@
-`include "simple_imem.v"
-`include "core.v"
-
 module core_tb ();
     reg         clock = 0;
     reg         mem_stall = 0;
@@ -13,7 +10,7 @@ module core_tb ();
         .addr_o(addr)
     );
 
-    inst_mem #( .loadfile("build/jupiter_asm.hex") ) 
+    simple_imem #( .loadfile("build/jupiter_asm.hex") ) 
     INSTMEM(
         .clock_i(clock),
         .stall_i(mem_stall),
