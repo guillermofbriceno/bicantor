@@ -109,7 +109,7 @@ module pipeline
     reg [31:0]  pc_dec0 = 0;
     reg [31:0]  pc_dec1 = 0;
 
-    always @(*) begin
+    always @(posedge clock_i) begin
         // Fetch Slot 0
         if (dec0_sr) begin
             inst0_dec_o <= 0;
