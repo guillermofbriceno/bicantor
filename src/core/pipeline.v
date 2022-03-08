@@ -24,10 +24,10 @@ module pipeline
     input  wire        dec_stall_i,
 
     // issue
-    output reg  [31:0] inst0_issue_o,
-    output reg  [31:0] inst1_issue_o,
-    output reg  [`CTRL_BUS] ctrl0_issue_o,
-    output reg  [`CTRL_BUS] ctrl1_issue_o,
+    output reg  [31:0] inst0_issue_o = 0,
+    output reg  [31:0] inst1_issue_o = 0,
+    output reg  [`CTRL_BUS] ctrl0_issue_o = 0,
+    output reg  [`CTRL_BUS] ctrl1_issue_o = 0,
     input  wire [31:0] issued_inst0_i,
     input  wire [31:0] issued_inst1_i,
     input  wire [`CTRL_BUS] issued_ctrl0_i,
@@ -40,36 +40,37 @@ module pipeline
     input  wire        issue1_special_stall_i,
 
     // execute
-    output reg  [31:0] inst0_exec_o,
-    output reg  [31:0] inst1_exec_o,
-    output reg  [`CTRL_BUS] ctrl0_exec_o,
-    output reg  [`CTRL_BUS] ctrl1_exec_o,
-    output reg  [31:0] pc_0_exec_o,
-    output reg  [31:0] pc_1_exec_o,
-    output reg  [31:0] rs1_data0_exec_o,
-    output reg  [31:0] rs2_data0_exec_o,
-    output reg  [31:0] rs1_data1_exec_o,
-    output reg  [31:0] rs2_data1_exec_o,
+    output reg  [31:0] inst0_exec_o      = 0,
+    output reg  [31:0] inst1_exec_o      = 0,
+    output reg  [`CTRL_BUS] ctrl0_exec_o = 0,
+    output reg  [`CTRL_BUS] ctrl1_exec_o = 0,
+    output reg  [31:0] pc_0_exec_o       = 0,
+    output reg  [31:0] pc_1_exec_o       = 0,
+    output reg  [31:0] rs1_data0_exec_o = 0,
+    output reg  [31:0] rs2_data0_exec_o = 0,
+    output reg  [31:0] rs1_data1_exec_o = 0,
+    output reg  [31:0] rs2_data1_exec_o = 0,
     input  wire [31:0] alu_0_exec_i,
     input  wire [31:0] alu_1_exec_i,
     input  wire        exec_stall_i,
     
     // lsu
-    output reg  [31:0]      alu_0_lsu_o,
-    output reg  [31:0]      alu_1_lsu_o,
-    output reg  [`CTRL_BUS] ctrl0_lsu_o,
-    output reg  [`CTRL_BUS] ctrl1_lsu_o,
-    output reg  [4:0]       rd_addr_0_lsu_o,
-    output reg  [4:0]       rd_addr_1_lsu_o,
-
-    input  wire        mem_stall_i,
+    output reg  [31:0]      alu_0_lsu_o = 0,
+    output reg  [31:0]      alu_1_lsu_o = 0,
+    output reg  [`CTRL_BUS] ctrl0_lsu_o = 0,
+    output reg  [`CTRL_BUS] ctrl1_lsu_o = 0,
+    output reg  [4:0]       rd_addr_0_lsu_o = 0,
+    output reg  [4:0]       rd_addr_1_lsu_o = 0,
+    input  wire             mem_stall_i,
 
     // wb
-    output reg  [31:0] rd_data_0_lsu_o,
-    output reg  [31:0] rd_data_1_lsu_o,
-    input  wire [31:0] rd_data_0_lsu_i,
-    input  wire [31:0] rd_data_1_lsu_i,
-    input  wire        wb_stall_i
+    output reg  [31:0]      alu_0_wb_o = 0,
+    output reg  [31:0]      alu_1_wb_o = 0,
+    output reg  [`CTRL_BUS] ctrl0_wb_o = 0,
+    output reg  [`CTRL_BUS] ctrl1_wb_o = 0,
+    output reg  [4:0]       rd_addr_0_wb_o = 0,
+    output reg  [4:0]       rd_addr_1_wb_o = 0,
+    input  wire             wb_stall_i
 );
     wire frontend_we_w;
     wire backend_we_w;
@@ -105,6 +106,8 @@ module pipeline
     */
     reg         dec0_sr = 0;
     reg         dec1_sr = 0;
+    reg [31:0]  pc_dec0 = 0;
+    reg [31:0]  pc_dec1 = 0;
 
     always @(*) begin
         // Fetch Slot 0
@@ -112,6 +115,7 @@ module pipeline
             inst0_dec_o <= 0;
         end else if (frontend_we_w) begin
             inst0_dec_o <= idata_f2_i[63:32];
+            pc_dec0     <= pc_f2_r;
         end
 
         // Fetch Slot 1
@@ -119,12 +123,16 @@ module pipeline
             inst1_dec_o <= 0;
         end else if (frontend_we_w) begin
             inst1_dec_o <= idata_f2_i[31:0];
+            pc_dec1     <= pc_f2_r + 4;
         end
     end
 
     /*
     *  Decode / Issue Buffers
     */
+    reg [31:0]  pc_issue0 = 0;
+    reg [31:0]  pc_issue1 = 0;
+
     always @(posedge clock_i) begin
         // Issue 0
         if (issue1_stall_w) begin
@@ -133,6 +141,7 @@ module pipeline
         end else if (backend_we_w && !issue0_stall_w) begin
             inst0_issue_o    <= inst0_dec_i;
             ctrl0_issue_o    <= ctrl0_dec_i;
+            pc_issue0        <= pc_dec0;
         end
 
         // Issue 1
@@ -142,13 +151,14 @@ module pipeline
         end else if (backend_we_w && !issue1_stall_w) begin
             inst1_issue_o    <= inst1_dec_i;
             ctrl1_issue_o    <= ctrl1_dec_i;
+            pc_issue1        <= pc_dec1;
         end
     end
 
     /*
     *  Issue / Execute Buffers
     */
-   always @(posedge clock_i) begin
+    always @(posedge clock_i) begin
         // Exec 0
         if (issue0_stall_w) begin
             inst0_exec_o        <= 0;
@@ -160,6 +170,7 @@ module pipeline
             ctrl0_exec_o        <= issued_ctrl0_i;
             rs1_data0_exec_o    <= rs1_data0_issue_i;
             rs2_data0_exec_o    <= rs2_data0_issue_i;
+            pc_0_exec_o         <= pc_issue0;
         end
 
         // Exec 1
@@ -173,18 +184,14 @@ module pipeline
             ctrl1_exec_o        <= issued_ctrl1_i;
             rs1_data1_exec_o    <= rs1_data1_issue_i;
             rs2_data1_exec_o    <= rs2_data1_issue_i;
+            pc_1_exec_o         <= pc_issue1;
         end
    end
 
     /*
     *  Execute / LSU Buffers
     */
-    reg         regwrite_0_lsu;
-    reg [4:0]   rd_addr_0_lsu;
-    reg         regwrite_1_lsu;
-    reg [4:0]   rd_addr_1_lsu;
-
-   always @(posedge clock_i) begin
+    always @(posedge clock_i) begin
         // Exec 0
         if (0) begin
         end else if (backend_we_w) begin
@@ -199,6 +206,27 @@ module pipeline
             alu_1_lsu_o <= alu_1_exec_i;
             ctrl1_lsu_o <= ctrl1_exec_o;
             rd_addr_1_lsu_o <= inst1_exec_o[`RD_ENC];
+        end
+   end
+
+    /*
+    *  LSU / Writeback Buffers
+    */
+    always @(posedge clock_i) begin
+        // Exec 0
+        if (0) begin
+        end else if (backend_we_w) begin
+            alu_0_wb_o      <= alu_0_lsu_o;
+            ctrl0_wb_o      <= ctrl0_lsu_o;
+            rd_addr_0_wb_o  <= rd_addr_0_lsu_o;
+        end
+
+        // Exec 1
+        if (0) begin
+        end else if (backend_we_w) begin
+            alu_1_wb_o      <= alu_1_lsu_o;
+            ctrl1_wb_o      <= ctrl1_lsu_o;
+            rd_addr_1_wb_o  <= rd_addr_1_lsu_o;
         end
    end
 

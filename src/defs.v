@@ -5,7 +5,7 @@
 `define RD_ENC 11:07
 `define F7_ENC 31:25
 `define F3_ENC 14:12
-`define U_IMM_ENC 14:12
+`define U_IMM_ENC 31:12
 `define I_IMM_ENC 31:20
 `define S_IMM_ENC(in) {in[31:25], in[11:7]}
 
@@ -40,11 +40,12 @@
 `define ISSUE_PRI 7
 `define ISSUE_SLOT 8
 `define FUNCT7_SEL 9
+`define FUNCT3_SEL 10
 `define ALUI_OP 7'b0010011
-`define ALUI_CTRL 10'b0000101000
+`define ALUI_CTRL 11'b10000101001
 `define ALUR_OP 7'b0110011
-`define ALUR_CTRL 10'b0000111001
+`define ALUR_CTRL 11'b11000111111
 `define LUI_OP 7'b0110111
-`define LUI_CTRL 10'b0000100000
-`define CTRL_BUS 9:0
+`define LUI_CTRL 11'b00000100110
+`define CTRL_BUS 10:0
 

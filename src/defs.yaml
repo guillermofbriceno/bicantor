@@ -8,7 +8,7 @@
       "RD_ENC" : "11:07"
       "F7_ENC" : "31:25"
       "F3_ENC" : "14:12"
-      "U_IMM_ENC" : "14:12"
+      "U_IMM_ENC" : "31:12"
       "I_IMM_ENC" : "31:20"
       "S_IMM_ENC(in)" : "{in[31:25], in[11:7]}"
 
@@ -57,24 +57,30 @@
     - "ISSUE_PRI"
     - "ISSUE_SLOT"
     - "FUNCT7_SEL"
+    - "FUNCT3_SEL"
   
   operation_codes:
     "ALUI":
       - opcode:         "0010011"
-        "RS1_ACTIVE":   1
         "REGWRITE":     1
+        "RS1_ACTIVE":   1
+        "FUNCT3_SEL":   1
+        "ALU_SRC1_MUX": "RS1_SEL"
+        "ALU_SRC2_MUX": "I_IMM_SEL"
 
     "ALUR":
       - opcode:         "0110011"
         "RS1_ACTIVE":   1
         "RS2_ACTIVE":   1
         "REGWRITE":     1
+        "FUNCT3_SEL":   1
+        "FUNCT7_SEL":   1
         "ALU_SRC1_MUX": "RS1_SEL"
+        "ALU_SRC2_MUX": "RS2_SEL"
 
     "LUI":
       - opcode:         "0110111"
         "REGWRITE":     1
         "ALU_SRC1_MUX": "U_IMM_SEL"
-
-
+        "ALU_SRC2_MUX": "RS2_SEL"
 

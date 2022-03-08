@@ -48,12 +48,17 @@ module execute
 
     wire [9:0] funct7_0;
     wire [9:0] funct7_1;
+    wire [2:0] funct3_0;
+    wire [2:0] funct3_1;
 
     assign funct7_0 = ctrl0_i[`FUNCT7_SEL] ? inst0_i[`F7_ENC] : 0;
     assign funct7_1 = ctrl1_i[`FUNCT7_SEL] ? inst1_i[`F7_ENC] : 0;
 
-    assign alu0_func = {funct7_0, inst0_i[`F3_ENC]};
-    assign alu1_func = {funct7_1, inst1_i[`F3_ENC]};
+    assign funct3_0 = ctrl0_i[`FUNCT3_SEL] ? inst0_i[`F3_ENC] : 0;
+    assign funct3_1 = ctrl1_i[`FUNCT3_SEL] ? inst1_i[`F3_ENC] : 0;
+
+    assign alu0_func = {funct7_0, funct3_0};
+    assign alu1_func = {funct7_1, funct3_1};
 
     bypass BYPASS(
         .rs1_exec0_i        (rs1_0_i),
@@ -148,6 +153,9 @@ module execute
     output reg [31:0]       alu_in1_o,
     output reg [31:0]       alu_in2_o
  );
+    wire [11:0] i_imm = inst_i[`I_IMM_ENC];
+    wire [11:0] s_imm = `S_IMM_ENC(inst_i);
+
     always @(*) begin
         case(ctrl_i[`ALU_SRC1_MUX])
             `RS1_SEL  : alu_in1_o <= bypassed_in1_i;
@@ -157,8 +165,8 @@ module execute
 
         case(ctrl_i[`ALU_SRC2_MUX])
             `RS2_SEL  : alu_in2_o <= bypassed_in2_i;
-            `I_IMM_SEL: alu_in2_o <= {{20{inst_i[`I_IMM_ENC]}}, inst_i[`I_IMM_ENC]};
-            `S_IMM_SEL: alu_in2_o <= {{20{`S_IMM_ENC(inst_i)}}, `S_IMM_ENC(inst_i)};
+            `I_IMM_SEL: alu_in2_o <= {{20{i_imm[11]}}, i_imm};
+            `S_IMM_SEL: alu_in2_o <= {{20{s_imm[11]}}, s_imm};
             `PC_SEL   : alu_in2_o <= pc_i;
             default   : alu_in2_o <= bypassed_in2_i;
         endcase

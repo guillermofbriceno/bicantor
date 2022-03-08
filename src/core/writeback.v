@@ -8,4 +8,7 @@ module writeback
 
 );
 
+    assign rd_data0_o = alu0_out_i;
+    assign rd_data1_o = alu1_out_i;
+
 endmodule

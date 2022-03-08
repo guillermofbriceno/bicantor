@@ -13,11 +13,11 @@ module regfile
     input  wire [31:0] B_rd_data_i,
     input  wire        B_rd_write_i,
 
-    output reg  [31:0] A_rs1_data_o,
-    output reg  [31:0] A_rs2_data_o,
+    output reg  [31:0] A_rs1_data_o = 0,
+    output reg  [31:0] A_rs2_data_o = 0,
 
-    output reg  [31:0] B_rs1_data_o,
-    output reg  [31:0] B_rs2_data_o
+    output reg  [31:0] B_rs1_data_o = 0,
+    output reg  [31:0] B_rs2_data_o = 0
 );
 
     reg [31:0] registers  [31:0];

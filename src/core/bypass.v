@@ -32,10 +32,10 @@ module bypass
     input               ww1_i,
     input       [04:0]  aw1_i,
     
-    output reg  [31:0]  bypassed_in1_0_o,
-    output reg  [31:0]  bypassed_in2_0_o,
-    output reg  [31:0]  bypassed_in1_1_o,
-    output reg  [31:0]  bypassed_in2_1_o
+    output reg  [31:0]  bypassed_in1_0_o = 0,
+    output reg  [31:0]  bypassed_in2_0_o = 0,
+    output reg  [31:0]  bypassed_in1_1_o = 0,
+    output reg  [31:0]  bypassed_in2_1_o = 0
 
 );
 
