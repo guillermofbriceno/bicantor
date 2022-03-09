@@ -3,9 +3,9 @@
 module pipeline
 (
     input  wire        clock_i,
+    output wire        frontend_we_o,
 
     // f1
-    output wire        f1_pc_we_o,
     input  wire [31:0] pc_f1_i,
     input  wire        f1_stall_i,
 
@@ -15,8 +15,6 @@ module pipeline
     input  wire        f2_stall_i,
 
     // decode
-    output reg  [31:0] inst0_dec_o     = 0,
-    output reg  [31:0] inst1_dec_o     = 0,
     input  wire [31:0] inst0_dec_i,
     input  wire [31:0] inst1_dec_i,
     input  wire [`CTRL_BUS] ctrl0_dec_i,
@@ -32,10 +30,6 @@ module pipeline
     input  wire [31:0] issued_inst1_i,
     input  wire [`CTRL_BUS] issued_ctrl0_i,
     input  wire [`CTRL_BUS] issued_ctrl1_i,
-    input  wire [31:0] rs1_data0_issue_i,
-    input  wire [31:0] rs2_data0_issue_i,
-    input  wire [31:0] rs1_data1_issue_i,
-    input  wire [31:0] rs2_data1_issue_i,
     input  wire        issue0_special_stall_i,
     input  wire        issue1_special_stall_i,
 
@@ -46,10 +40,6 @@ module pipeline
     output reg  [`CTRL_BUS] ctrl1_exec_o = 0,
     output reg  [31:0] pc_0_exec_o       = 0,
     output reg  [31:0] pc_1_exec_o       = 0,
-    output reg  [31:0] rs1_data0_exec_o = 0,
-    output reg  [31:0] rs2_data0_exec_o = 0,
-    output reg  [31:0] rs1_data1_exec_o = 0,
-    output reg  [31:0] rs2_data1_exec_o = 0,
     input  wire [31:0] alu_0_exec_i,
     input  wire [31:0] alu_1_exec_i,
     input  wire        exec_stall_i,
@@ -88,6 +78,8 @@ module pipeline
 
     assign f1_pc_we_o = frontend_we_w;
 
+    assign frontend_we_o = frontend_we_w;
+
     /*
     *  F1 / F2 or MEM Buffer
     */
@@ -112,17 +104,13 @@ module pipeline
     always @(posedge clock_i) begin
         // Fetch Slot 0
         if (dec0_sr) begin
-            inst0_dec_o <= 0;
         end else if (frontend_we_w) begin
-            inst0_dec_o <= idata_f2_i[63:32];
             pc_dec0     <= pc_f2_r;
         end
 
         // Fetch Slot 1
         if (dec0_sr) begin
-            inst1_dec_o <= 0;
         end else if (frontend_we_w) begin
-            inst1_dec_o <= idata_f2_i[31:0];
             pc_dec1     <= pc_f2_r + 4;
         end
     end
@@ -163,13 +151,9 @@ module pipeline
         if (issue0_stall_w) begin
             inst0_exec_o        <= 0;
             ctrl0_exec_o        <= 0;
-            rs1_data0_exec_o    <= 0;
-            rs2_data0_exec_o    <= 0;
         end else if (backend_we_w) begin
             inst0_exec_o        <= issued_inst0_i;
             ctrl0_exec_o        <= issued_ctrl0_i;
-            rs1_data0_exec_o    <= rs1_data0_issue_i;
-            rs2_data0_exec_o    <= rs2_data0_issue_i;
             pc_0_exec_o         <= pc_issue0;
         end
 
@@ -177,13 +161,9 @@ module pipeline
         if (issue1_stall_w) begin
             inst1_exec_o        <= 0;
             ctrl1_exec_o        <= 0;
-            rs1_data1_exec_o    <= 0;
-            rs2_data1_exec_o    <= 0;
         end else if (backend_we_w) begin
             inst1_exec_o        <= issued_inst1_i;
             ctrl1_exec_o        <= issued_ctrl1_i;
-            rs1_data1_exec_o    <= rs1_data1_issue_i;
-            rs2_data1_exec_o    <= rs2_data1_issue_i;
             pc_1_exec_o         <= pc_issue1;
         end
    end

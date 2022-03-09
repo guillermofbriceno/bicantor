@@ -5,19 +5,22 @@ module core
     input  wire         clock_i,
     input  wire [63:0]  data_i,
 
-    output wire [09:0]  addr_o
+    output wire [09:0]  addr_o,
+    output wire         imemstall_o
 );
     reg exec_stall_ow = 0; //temp
     reg f2_stall_ow   = 0; //temp
     reg mem_stall_ow  = 0; //temp
     reg wb_stall_ow   = 0; //temp
 
+    wire frontend_we;
+    assign imemstall_o = frontend_we;
     
     pipeline PIPELINE(
         .clock_i                (clock_i),
+        .frontend_we_o          (frontend_we),
 
         // f1
-        .f1_pc_we_o             (f1_pc_we_iw),
         .pc_f1_i                (pc_f1_ow),
         .f1_stall_i             (f1_stall_ow),
 
@@ -27,8 +30,6 @@ module core
         .f2_stall_i             (f2_stall_ow),
 
         // decode
-        .inst0_dec_o            (inst0_dec_iw),
-        .inst1_dec_o            (inst1_dec_iw),
         .inst0_dec_i            (inst0_dec_ow),
         .inst1_dec_i            (inst1_dec_ow),
         .ctrl0_dec_i            (ctrl0_dec_ow),
@@ -44,10 +45,6 @@ module core
         .issued_inst1_i         (issued_inst1_ow),
         .issued_ctrl0_i         (issued_ctrl0_ow),
         .issued_ctrl1_i         (issued_ctrl1_ow),
-        .rs1_data0_issue_i      (rs1_data0_ow),
-        .rs2_data0_issue_i      (rs2_data0_ow),
-        .rs1_data1_issue_i      (rs1_data1_ow),
-        .rs2_data1_issue_i      (rs2_data1_ow),
         .issue0_special_stall_i (issue0_special_stall_ow),
         .issue1_special_stall_i (issue1_special_stall_ow),
 
@@ -59,10 +56,6 @@ module core
         .ctrl1_exec_o           (ctrl1_exec_iw),
         .pc_0_exec_o            (pc_0_exec_iw),
         .pc_1_exec_o            (pc_1_exec_iw),
-        .rs1_data0_exec_o       (rs1_data0_exec_iw),
-        .rs2_data0_exec_o       (rs2_data0_exec_iw),
-        .rs1_data1_exec_o       (rs1_data1_exec_iw),
-        .rs2_data1_exec_o       (rs2_data1_exec_iw),
         .alu_0_exec_i           (alu0_exec_ow),
         .alu_1_exec_i           (alu1_exec_ow),
         .exec_stall_i           (exec_stall_ow),
@@ -88,11 +81,10 @@ module core
     );
 
     wire [31:0] pc_f1_ow;
-    wire        f1_pc_we_iw;
 
     fetch1 FETCH1(
         .clock_i                (clock_i),
-        .pc_we_i                (f1_pc_we_iw),
+        .pc_we_i                (frontend_we),
         .pc_o                   (pc_f1_ow),
         .stall_o                (f1_stall_ow)
     );
@@ -101,12 +93,9 @@ module core
 
     // pipe
 
-    wire [31:0] inst0_dec_iw;
-    wire [31:0] inst1_dec_iw;
-
     decode DECODE(
-        .inst0_i                (inst0_dec_iw),
-        .inst1_i                (inst1_dec_iw),
+        .inst0_i                (data_i[63:32]),
+        .inst1_i                (data_i[31:00]),
 
         .inst0_o                (inst0_dec_ow),
         .inst1_o                (inst1_dec_ow),
@@ -145,11 +134,10 @@ module core
         .rd_data1_i             (rd_data1_wb_ow),
         .rd_write1_i            (ctrl1_wb_iw[`REGWRITE]),
 
-        .rs1_data0_o            (rs1_data0_ow),
-        .rs2_data0_o            (rs2_data0_ow),
-
-        .rs1_data1_o            (rs1_data1_ow),
-        .rs2_data1_o            (rs2_data1_ow),
+        .rs1_data0_o            (rs1_data0_exec_iw),
+        .rs2_data0_o            (rs2_data0_exec_iw),
+        .rs1_data1_o            (rs1_data1_exec_iw),
+        .rs2_data1_o            (rs2_data1_exec_iw),
 
         .issue0_special_stall_o (issue0_special_stall_ow),
         .issue1_special_stall_o (issue1_special_stall_ow),
@@ -159,10 +147,6 @@ module core
         .issued_inst1_o         (issued_inst1_ow)
     );
 
-    wire [31:0]         rs1_data0_ow;
-    wire [31:0]         rs2_data0_ow;
-    wire [31:0]         rs1_data1_ow;
-    wire [31:0]         rs2_data1_ow;
     wire                issue0_special_stall_ow;
     wire                issue1_special_stall_ow;
     wire [`CTRL_BUS]    issued_ctrl0_ow;

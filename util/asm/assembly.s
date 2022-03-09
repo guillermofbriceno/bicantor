@@ -10,6 +10,7 @@ __start:
         li      t0, 0xDEADBEEF
         li      t1, 0x1
         add     t3, t0, t1
+        add     t4, t0, t1
         bne     zero, t0, __start
 
         #addi      t0, zero, 0x4

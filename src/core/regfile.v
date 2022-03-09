@@ -13,14 +13,24 @@ module regfile
     input  wire [31:0] B_rd_data_i,
     input  wire        B_rd_write_i,
 
-    output reg  [31:0] A_rs1_data_o = 0,
-    output reg  [31:0] A_rs2_data_o = 0,
+    output wire [31:0] A_rs1_data_o,
+    output wire [31:0] A_rs2_data_o,
 
-    output reg  [31:0] B_rs1_data_o = 0,
-    output reg  [31:0] B_rs2_data_o = 0
+    output wire [31:0] B_rs1_data_o,
+    output wire [31:0] B_rs2_data_o
 );
 
     reg [31:0] registers  [31:0];
+
+    reg [04:0] A_rs1_address_internal;
+    reg [04:0] A_rs2_address_internal;
+    reg [04:0] B_rs1_address_internal;
+    reg [04:0] B_rs2_address_internal;
+
+    assign A_rs1_data_o = registers[A_rs1_address_internal];
+    assign A_rs2_data_o = registers[A_rs2_address_internal];
+    assign B_rs1_data_o = registers[B_rs1_address_internal];
+    assign B_rs2_data_o = registers[B_rs2_address_internal];
 
     /*
     *  Initialize registers at zero and dump states
@@ -51,11 +61,11 @@ module regfile
     *  Read
     */
     always @(posedge clock_i) begin
-        A_rs1_data_o <= registers[A_rs1_addr_i];
-        A_rs2_data_o <= registers[A_rs2_addr_i];
+        A_rs1_address_internal <= A_rs1_addr_i;
+        A_rs2_address_internal <= A_rs2_addr_i;
 
-        B_rs1_data_o <= registers[B_rs1_addr_i];
-        B_rs2_data_o <= registers[B_rs2_addr_i];
+        B_rs1_address_internal <= B_rs1_addr_i;
+        B_rs2_address_internal <= B_rs2_addr_i;
     end
 
 endmodule
