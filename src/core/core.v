@@ -76,6 +76,8 @@ module core
         .ctrl1_wb_o             (ctrl1_wb_iw),
         .rd_addr_0_wb_o         (rd_addr_0_wb_iw),
         .rd_addr_1_wb_o         (rd_addr_1_wb_iw),
+        .pc_0_wb_o              (pc_0_wb_iw),
+        .pc_1_wb_o              (pc_1_wb_iw),
         .wb_stall_i             (wb_stall_ow)
 
     );
@@ -227,12 +229,16 @@ module core
     wire [`CTRL_BUS]    ctrl1_wb_iw;
     wire [4:0]          rd_addr_0_wb_iw;
     wire [4:0]          rd_addr_1_wb_iw;
+    wire [31:0]         pc_0_wb_iw;
+    wire [31:0]         pc_1_wb_iw;
 
     writeback WRITEBACK(
         .alu0_out_i (alu_0_wb_iw),
         .alu1_out_i (alu_1_wb_iw),
-        .rd_data0_o(rd_data0_wb_ow),
-        .rd_data1_o(rd_data1_wb_ow)
+        .pc_0_i     (pc_0_wb_iw),
+        .pc_1_i     (pc_1_wb_iw),
+        .rd_data0_o (rd_data0_wb_ow),
+        .rd_data1_o (rd_data1_wb_ow)
     );
 
     wire [31:0] rd_data0_wb_ow;

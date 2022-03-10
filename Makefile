@@ -18,7 +18,7 @@ DEFVERI = ./src/defs.v
 
 .PHONY: clean
 
-$(TESTBENCH_VVP): $(SRCS) $(TB) $(DEFVERI)
+$(TESTBENCH_VVP): $(SRCS) $(TB) $(DEFVERI) $(JUPITER_HEX)
 	mkdir -p build/
 	iverilog -o $@ $(TESTBENCH_CORE) -y $(SRCS) -I $(DEFVERI)
 	vvp $@
@@ -32,7 +32,7 @@ $(DEFVERI): $(DEFYAML)
 
 defs: $(DEFVERI)
 
-test: $(JUPITER_HEX) $(TESTBENCH_VVP) 
+test: $(TESTBENCH_VVP) 
 
 asm: $(JUPITER_HEX)
 

@@ -1,5 +1,4 @@
 `define NOP 32'b0
-`define TEMP1 32'h00001234
 `define RS1_ENC 19:15
 `define RS2_ENC 24:20
 `define RD_ENC 11:07
@@ -8,6 +7,8 @@
 `define U_IMM_ENC 31:12
 `define I_IMM_ENC 31:20
 `define S_IMM_ENC(in) {in[31:25], in[11:7]}
+`define TAG_RANGE(abits) 31:(31 - (29 - abits))
+`define IDX_RANGE(abits) (31 - (29 - abits) - 1):2
 
 `define TEMP2 0
 `define TEMP3 1
@@ -47,5 +48,7 @@
 `define ALUR_CTRL 11'b11000111111
 `define LUI_OP 7'b0110111
 `define LUI_CTRL 11'b00000100110
+`define AUIPC_OP 7'b0010111
+`define AUIPC_CTRL 11'b00000100100
 `define CTRL_BUS 10:0
 

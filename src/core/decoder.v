@@ -14,6 +14,7 @@ module decoder
             `ALUI_OP:   control_o <= `ALUI_CTRL;
             `ALUR_OP:   control_o <= `ALUR_CTRL;
             `LUI_OP :   control_o <= `LUI_CTRL;
+            `AUIPC_OP : control_o <= `AUIPC_CTRL;
              default:   control_o <= `NOP;
         endcase
     end

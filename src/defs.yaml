@@ -1,8 +1,6 @@
 - type: plain_def
   values:
     - "NOP": 32'b0
-      "TEMP1":  32'h00001234
-
       "RS1_ENC": "19:15"
       "RS2_ENC": "24:20"
       "RD_ENC" : "11:07"
@@ -11,6 +9,9 @@
       "U_IMM_ENC" : "31:12"
       "I_IMM_ENC" : "31:20"
       "S_IMM_ENC(in)" : "{in[31:25], in[11:7]}"
+
+      "TAG_RANGE(abits)" : "31:(31 - (29 - abits))"
+      "IDX_RANGE(abits)" : "(31 - (29 - abits) - 1):2"
 
 - type: enum
   values:
@@ -84,3 +85,8 @@
         "ALU_SRC1_MUX": "U_IMM_SEL"
         "ALU_SRC2_MUX": "RS2_SEL"
 
+    "AUIPC":
+      - opcode:         "0010111"
+        "REGWRITE":     1
+        "ALU_SRC1_MUX": "U_IMM_SEL"
+        "ALU_SRC2_MUX": "PC_SEL"

@@ -2,4 +2,5 @@ build/
 tags
 Session.vim
 *.vcd
+*.gtkw
 note

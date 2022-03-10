@@ -60,6 +60,8 @@ module pipeline
     output reg  [`CTRL_BUS] ctrl1_wb_o = 0,
     output reg  [4:0]       rd_addr_0_wb_o = 0,
     output reg  [4:0]       rd_addr_1_wb_o = 0,
+    output reg  [31:0]      pc_0_wb_o = 0,
+    output reg  [31:0]      pc_1_wb_o = 0,
     input  wire             wb_stall_i
 );
     wire frontend_we_w;
@@ -171,6 +173,9 @@ module pipeline
     /*
     *  Execute / LSU Buffers
     */
+    reg [31:0] pc_0_lsu;
+    reg [31:0] pc_1_lsu;
+
     always @(posedge clock_i) begin
         // Exec 0
         if (0) begin
@@ -178,6 +183,7 @@ module pipeline
             alu_0_lsu_o <= alu_0_exec_i;
             ctrl0_lsu_o <= ctrl0_exec_o;
             rd_addr_0_lsu_o <= inst0_exec_o[`RD_ENC];
+            pc_0_lsu <= pc_0_exec_o;
         end
 
         // Exec 1
@@ -186,6 +192,7 @@ module pipeline
             alu_1_lsu_o <= alu_1_exec_i;
             ctrl1_lsu_o <= ctrl1_exec_o;
             rd_addr_1_lsu_o <= inst1_exec_o[`RD_ENC];
+            pc_1_lsu <= pc_1_exec_o;
         end
    end
 
