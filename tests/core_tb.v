@@ -27,6 +27,7 @@ module core_tb ();
         for (i = 0; i < 32; i = i + 1) begin
             $dumpvars(0, CORE.ISSUE.REGFILE.registers[i]);
         end
+
         //$dumpvars(0, INSTMEM.instmemory);
         //for(i=0; i < 1024; i=i+1) begin
         //    $dumpvars(0, INSTMEM.instmemory[i]);
