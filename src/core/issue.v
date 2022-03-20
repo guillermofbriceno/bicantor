@@ -6,9 +6,12 @@ module issue
 
     input  wire [31:0] inst0_i,
     input  wire [31:0] inst1_i,
-
     input  wire [`CTRL_BUS] ctrl0_i,
     input  wire [`CTRL_BUS] ctrl1_i,
+    input  wire             pred_0_i,
+    input  wire             pred_1_i,
+    input  wire [31:0]      pred_tgt_0_i,
+    input  wire [31:0]      pred_tgt_1_i,
 
     input  wire [04:0] rd_addr0_i,
     input  wire [31:0] rd_data0_i,
@@ -30,7 +33,11 @@ module issue
     output  wire [`CTRL_BUS] issued_ctrl0_o,
     output  wire [`CTRL_BUS] issued_ctrl1_o,
     output  wire [31:0]      issued_inst0_o,
-    output  wire [31:0]      issued_inst1_o
+    output  wire [31:0]      issued_inst1_o,
+    output  wire             issued_pred_0_o,
+    output  wire             issued_pred_1_o,
+    output  wire [31:0]      issued_pred_tgt_0_o,
+    output  wire [31:0]      issued_pred_tgt_1_o
 );
 
     wire                    issue0_sw_req;
@@ -62,10 +69,14 @@ module issue
 
     assign switch = issue0_sw_req || (!issue0_dnsw_req && issue1_sw_req && !inst_dep);
     
-    assign issued_inst0_o = (switch) ? inst1_i : inst0_i;
-    assign issued_inst1_o = (switch) ? inst0_i : inst1_i;
-    assign issued_ctrl0_o = (switch) ? ctrl1_i : ctrl0_i;
-    assign issued_ctrl1_o = (switch) ? ctrl0_i : ctrl1_i;
+    assign issued_inst0_o      = (switch) ? inst1_i     : inst0_i;
+    assign issued_inst1_o      = (switch) ? inst0_i     : inst1_i;
+    assign issued_ctrl0_o      = (switch) ? ctrl1_i     : ctrl0_i;
+    assign issued_ctrl1_o      = (switch) ? ctrl0_i     : ctrl1_i;
+    assign issued_pred_0_o     = (switch) ? pred_1_i    : pred_0_i;
+    assign issued_pred_1_o     = (switch) ? pred_0_i    : pred_1_i;
+    assign issued_pred_tgt_0_o = (switch) ? pred_tgt_1_i: pred_tgt_0_i;
+    assign issued_pred_tgt_1_o = (switch) ? pred_tgt_0_i: pred_tgt_1_i;
 
 
 

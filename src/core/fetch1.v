@@ -5,11 +5,18 @@ module fetch1
     input               clock_i,
 
     input               pc_we_i,
-
     input  wire [31:0]  update_pc_i,
     input  wire [31:0]  update_tgt_i,
     input  wire         last_br_i,
+    input  wire         update_pht_i,
+    input  wire         update_btb_i,
+    input  wire         wrong_pred_i,
+    input  wire [31:0]  fixed_pc_i,
 
+    output wire         pred_0_o,
+    output wire         pred_1_o,
+    output      [31:0]  pred_tgt_0_o,
+    output      [31:0]  pred_tgt_1_o,
     output      [31:0]  pc_o,
     output reg          stall_o = 0
 );
@@ -21,19 +28,13 @@ module fetch1
     reg [31:0]      pc_mux_out = 0;
     reg [`PC_MUX]   pc_mux = `PC_MUX_P8;
 
-    reg             update_pht;
-    reg             update_btb;
     wire            btb_hit_0;
     wire            btb_hit_1;
-    wire [31:0]     target_0;
-    wire [31:0]     target_1;
     wire            pht_pred_0;
     wire            pht_pred_1;
-    wire            take_pred_0;
-    wire            take_pred_1;
 
-    assign take_pred_0 = btb_hit_0 && pht_pred_0;
-    assign take_pred_1 = btb_hit_1 && pht_pred_1;
+    assign pred_0_o = btb_hit_0 && pht_pred_0;
+    assign pred_1_o = btb_hit_1 && pht_pred_1;
 
     assign pc_o = pc;
 
@@ -43,12 +44,13 @@ module fetch1
     end
 
     always @(*) begin
-        case({take_pred_0, take_pred_1})
-            2'b00:      pc_mux_out <= pc + 8;
-            2'b01:      pc_mux_out <= target_1;
-            2'b10:      pc_mux_out <= target_0;
-            2'b11:      pc_mux_out <= target_0;
-            default:    pc_mux_out <= 32'bX;
+        case({pred_0_o, pred_1_o, wrong_pred_i})
+            3'b000:  pc_mux_out <= pc + 8;
+            3'b010:  pc_mux_out <= pred_tgt_1_o;
+            3'b100:  pc_mux_out <= pred_tgt_0_o;
+            3'b110:  pc_mux_out <= pred_tgt_0_o;
+            3'b001:  pc_mux_out <= fixed_pc_i;
+            default: pc_mux_out <= 32'bX;
         endcase
     end
 
@@ -57,18 +59,18 @@ module fetch1
         .pc_i               (pc_mux_out),
         .update_pc_i        (update_pc_i),
         .update_target_i    (update_tgt_i),
-        .update_i           (update_btb),
+        .update_i           (update_btb_i),
         .hit_0_o            (btb_hit_0),
         .hit_1_o            (btb_hit_1),
-        .target_addr_0_o    (target_0),
-        .target_addr_1_o    (target_1)
+        .target_addr_0_o    (pred_tgt_0_o),
+        .target_addr_1_o    (pred_tgt_1_o)
     );
 
     pattern_history_table PHT(
         .clock_i            (clock_i),
         .pc_i               (pc_mux_out),
         .update_pc_i        (update_pc_i),
-        .update_i           (update_pht),
+        .update_i           (update_pht_i),
         .last_br_i          (last_br_i),
         .pred_0_o           (pht_pred_0),
         .pred_1_o           (pht_pred_1)

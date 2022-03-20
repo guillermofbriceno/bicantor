@@ -6,12 +6,21 @@
       "RD_ENC" : "11:07"
       "F7_ENC" : "31:25"
       "F3_ENC" : "14:12"
-      "U_IMM_ENC" : "31:12"
-      "I_IMM_ENC" : "31:20"
-      "S_IMM_ENC(in)" : "{in[31:25], in[11:7]}"
+      "U_IMM_ENC(in)" : "{in[31:12], 12'b0}"
+      "I_IMM_ENC(in)" : "{{22{in[31]}}, in[30:20]}"
+      "S_IMM_ENC(in)" : "{{22{in[31]}}, in[31:25], in[11:7]}"
+      "B_IMM_ENC(in)" : "{{20{in[31]}}, in[7], in[30:25], in[11:8], 1'b0}"
+      "J_IMM_ENC(in)" : "{{12{in[31]}}, in[19:12], in[20], in[30:25], in[24:21], 1'b0}"
 
       "TAG_RANGE(abits)" : "31:(31 - (29 - abits))"
       "IDX_RANGE(abits)" : "(31 - (29 - abits) - 1):2"
+
+      "BEQ":  "3'b000"
+      "BNE":  "3'b001"
+      "BLT":  "3'b100"
+      "BGE":  "3'b101"
+      "BLTU": "3'b110"
+      "BGEU": "3'b111"
 
 - type: enum
   values:
@@ -59,6 +68,9 @@
     - "ISSUE_SLOT"
     - "FUNCT7_SEL"
     - "FUNCT3_SEL"
+    - "JAL"
+    - "JALR"
+    - "COND_BRANCH"
   
   operation_codes:
     "ALUI":
@@ -90,3 +102,20 @@
         "REGWRITE":     1
         "ALU_SRC1_MUX": "U_IMM_SEL"
         "ALU_SRC2_MUX": "PC_SEL"
+
+    "JAL":
+      - opcode:         "1101111"
+        "REGWRITE":     1
+        "JAL":          1
+
+    "JALR":
+      - opcode:         "1100111"
+        "REGWRITE":     1
+        "JALR":         1
+
+    "BRANCH":
+      - opcode:         "1100011"
+        "COND_BRANCH":  1
+        "FUNCT3_SEL":   1
+        "RS1_ACTIVE":   1
+        "RS2_ACTIVE":   1

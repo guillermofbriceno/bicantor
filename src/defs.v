@@ -4,11 +4,19 @@
 `define RD_ENC 11:07
 `define F7_ENC 31:25
 `define F3_ENC 14:12
-`define U_IMM_ENC 31:12
-`define I_IMM_ENC 31:20
-`define S_IMM_ENC(in) {in[31:25], in[11:7]}
+`define U_IMM_ENC(in) {in[31:12], 12'b0}
+`define I_IMM_ENC(in) {{22{in[31]}}, in[30:20]}
+`define S_IMM_ENC(in) {{22{in[31]}}, in[31:25], in[11:7]}
+`define B_IMM_ENC(in) {{20{in[31]}}, in[7], in[30:25], in[11:8], 1'b0}
+`define J_IMM_ENC(in) {{12{in[31]}}, in[19:12], in[20], in[30:25], in[24:21], 1'b0}
 `define TAG_RANGE(abits) 31:(31 - (29 - abits))
 `define IDX_RANGE(abits) (31 - (29 - abits) - 1):2
+`define BEQ 3'b000
+`define BNE 3'b001
+`define BLT 3'b100
+`define BGE 3'b101
+`define BLTU 3'b110
+`define BGEU 3'b111
 
 `define TEMP2 0
 `define TEMP3 1
@@ -37,18 +45,26 @@
 `define RS1_ACTIVE 3
 `define RS2_ACTIVE 4
 `define REGWRITE 5
-`define COND_BRANCH 6
+`define COND_BRANCH 13
 `define ISSUE_PRI 7
 `define ISSUE_SLOT 8
 `define FUNCT7_SEL 9
 `define FUNCT3_SEL 10
+`define JAL 11
+`define JALR 12
 `define ALUI_OP 7'b0010011
-`define ALUI_CTRL 11'b10000101001
+`define ALUI_CTRL 14'b00010000101001
 `define ALUR_OP 7'b0110011
-`define ALUR_CTRL 11'b11000111111
+`define ALUR_CTRL 14'b00011000111111
 `define LUI_OP 7'b0110111
-`define LUI_CTRL 11'b00000100110
+`define LUI_CTRL 14'b00000000100110
 `define AUIPC_OP 7'b0010111
-`define AUIPC_CTRL 11'b00000100100
-`define CTRL_BUS 10:0
+`define AUIPC_CTRL 14'b00000000100100
+`define JAL_OP 7'b1101111
+`define JAL_CTRL 14'b00100000100000
+`define JALR_OP 7'b1100111
+`define JALR_CTRL 14'b01000000100000
+`define BRANCH_OP 7'b1100011
+`define BRANCH_CTRL 14'b10010000011000
+`define CTRL_BUS 13:0
 

@@ -2,35 +2,45 @@
 
 module execute
 (
-    input wire [31:0]        inst0_i,
-    input wire [31:0]        inst1_i,
-    input wire [`CTRL_BUS]   ctrl0_i,
-    input wire [`CTRL_BUS]   ctrl1_i,
-    input wire [31:0]        pc_0_i,
-    input wire [31:0]        pc_1_i,
+    input  wire [31:0]        inst0_i,
+    input  wire [31:0]        inst1_i,
+    input  wire [`CTRL_BUS]   ctrl0_i,
+    input  wire [`CTRL_BUS]   ctrl1_i,
+    input  wire [31:0]        pc_0_i,
+    input  wire [31:0]        pc_1_i,
 
-    input wire [31:0]        rs1_0_i,
-    input wire [31:0]        rs2_0_i,
-    input wire [31:0]        rs1_1_i,
-    input wire [31:0]        rs2_1_i,
+    input  wire [31:0]        rs1_0_i,
+    input  wire [31:0]        rs2_0_i,
+    input  wire [31:0]        rs1_1_i,
+    input  wire [31:0]        rs2_1_i,
 
-    input wire               wm0_i,
-    input wire [4:0]         am0_i,
-    input wire               wm1_i,
-    input wire [4:0]         am1_i,
+    input  wire               wm0_i,
+    input  wire [4:0]         am0_i,
+    input  wire               wm1_i,
+    input  wire [4:0]         am1_i,
 
-    input wire               ww0_i,
-    input wire [4:0]         aw0_i,
-    input wire               ww1_i,
-    input wire [4:0]         aw1_i,
+    input  wire               ww0_i,
+    input  wire [4:0]         aw0_i,
+    input  wire               ww1_i,
+    input  wire [4:0]         aw1_i,
 
-    input wire [31:0]        bypass_lsu0_i,
-    input wire [31:0]        bypass_wb0_i,
-    input wire [31:0]        bypass_lsu1_i,
-    input wire [31:0]        bypass_wb1_i,
+    input  wire [31:0]        bypass_lsu0_i,
+    input  wire [31:0]        bypass_wb0_i,
+    input  wire [31:0]        bypass_lsu1_i,
+    input  wire [31:0]        bypass_wb1_i,
 
-    output     [31:0]        alu0_o,
-    output     [31:0]        alu1_o
+    input  wire [31:0]        pred_tgt_i,
+    input  wire               pred_taken_i,
+
+    output      [31:0]        alu0_o,
+    output      [31:0]        alu1_o,
+
+    output                    update_pht_o,
+    output                    update_btb_o,
+    output reg  [31:0]        corr_tgt_o,
+    output                    corr_taken_o,
+    output                    wrong_pred_o,
+    output wire [31:0]        fixed_pc_o
      
 );
     wire [31:0] bypassed_in1_0;
@@ -51,6 +61,9 @@ module execute
     wire [2:0] funct3_0;
     wire [2:0] funct3_1;
 
+    reg        in_comparison;
+    wire       is_branch_inst;
+
     assign funct7_0 = ctrl0_i[`FUNCT7_SEL] ? inst0_i[`F7_ENC] : 0;
     assign funct7_1 = ctrl1_i[`FUNCT7_SEL] ? inst1_i[`F7_ENC] : 0;
 
@@ -59,6 +72,13 @@ module execute
 
     assign alu0_func = {funct7_0, funct3_0};
     assign alu1_func = {funct7_1, funct3_1};
+
+    assign is_branch_inst = ctrl0_i[`COND_BRANCH] || ctrl0_i[`JAL] || ctrl0_i[`JALR];
+    assign update_pht_o   = is_branch_inst;
+    assign corr_taken_o   = (ctrl0_i[`COND_BRANCH] ? in_comparison : 0) || ctrl0_i[`JAL] || ctrl0_i[`JALR];
+    assign update_btb_o   = (corr_tgt_o != pred_tgt_i) && is_branch_inst && corr_taken_o;
+    assign wrong_pred_o   = update_btb_o || ( (corr_taken_o != pred_taken_i) && is_branch_inst );
+    assign fixed_pc_o     = corr_taken_o ? corr_tgt_o : pc_0_i + 4;
 
     bypass BYPASS(
         .rs1_exec0_i        (rs1_0_i),
@@ -118,6 +138,24 @@ module execute
         .out(alu0_o)
     );
 
+    always @(*) begin
+        case(funct3_0)
+            `BEQ:    in_comparison <= (alu_in1_0          == alu_in2_0);
+            `BNE:    in_comparison <= (alu_in1_0          != alu_in2_0);
+            `BLT:    in_comparison <= ($signed(alu_in1_0)  < $signed(alu_in2_0));
+            `BGE:    in_comparison <= ($signed(alu_in1_0)  > $signed(alu_in2_0));
+            `BLTU:   in_comparison <= (alu_in1_0           < alu_in2_0);
+            `BGEU:   in_comparison <= (alu_in1_0           > alu_in2_0);
+            default: in_comparison <= 0;
+        endcase
+
+        case({ctrl0_i[`COND_BRANCH], ctrl0_i[`JAL], ctrl0_i[`JALR]})
+            3'b100:  corr_tgt_o <= `B_IMM_ENC(inst0_i) + pc_0_i;
+            3'b010:  corr_tgt_o <= `J_IMM_ENC(inst0_i) + pc_0_i;
+            3'b001:  corr_tgt_o <= `I_IMM_ENC(inst0_i) + alu_in1_0;
+            default: corr_tgt_o <= 32'bX;
+        endcase
+    end
 
     /*
     *  ALU Slot 1
@@ -153,20 +191,18 @@ module execute
     output reg [31:0]       alu_in1_o,
     output reg [31:0]       alu_in2_o
  );
-    wire [11:0] i_imm = inst_i[`I_IMM_ENC];
-    wire [11:0] s_imm = `S_IMM_ENC(inst_i);
 
     always @(*) begin
         case(ctrl_i[`ALU_SRC1_MUX])
             `RS1_SEL  : alu_in1_o <= bypassed_in1_i;
-            `U_IMM_SEL: alu_in1_o <= {inst_i[`U_IMM_ENC], 12'b0};
+            `U_IMM_SEL: alu_in1_o <= `U_IMM_ENC(inst_i);
             default   : alu_in1_o <= bypassed_in1_i;
         endcase
 
         case(ctrl_i[`ALU_SRC2_MUX])
             `RS2_SEL  : alu_in2_o <= bypassed_in2_i;
-            `I_IMM_SEL: alu_in2_o <= {{20{i_imm[11]}}, i_imm};
-            `S_IMM_SEL: alu_in2_o <= {{20{s_imm[11]}}, s_imm};
+            `I_IMM_SEL: alu_in2_o <= `I_IMM_ENC(inst_i);
+            `S_IMM_SEL: alu_in2_o <= `S_IMM_ENC(inst_i);
             `PC_SEL   : alu_in2_o <= pc_i;
             default   : alu_in2_o <= bypassed_in2_i;
         endcase

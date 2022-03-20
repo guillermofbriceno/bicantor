@@ -14,7 +14,10 @@ module decoder
             `ALUI_OP:   control_o <= `ALUI_CTRL;
             `ALUR_OP:   control_o <= `ALUR_CTRL;
             `LUI_OP :   control_o <= `LUI_CTRL;
-            `AUIPC_OP : control_o <= `AUIPC_CTRL;
+            `AUIPC_OP:  control_o <= `AUIPC_CTRL;
+            `JAL_OP:    control_o <= `JAL_CTRL;
+            `JALR_OP:   control_o <= `JALR_CTRL;
+            `BRANCH_OP: control_o <= `BRANCH_CTRL;
              default:   control_o <= `NOP;
         endcase
     end

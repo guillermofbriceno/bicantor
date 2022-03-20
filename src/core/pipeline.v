@@ -6,15 +6,22 @@ module pipeline
     output wire        frontend_we_o,
 
     // f1
-    input  wire [31:0] pc_f1_i,
+    input  wire [31:0] f1_pc_i,
+    input  wire        f1_pred_0_i,
+    input  wire        f1_pred_1_i,
+    input  wire [31:0] f1_pred_tgt_0_i,
+    input  wire [31:0] f1_pred_tgt_1_i,
     input  wire        f1_stall_i,
 
     // f2 or imem
     output wire [09:0] iaddr_f2_o,
+    output wire        f2_pred_0_o,
     input  wire [63:0] idata_f2_i,
     input  wire        f2_stall_i,
 
     // decode
+    output wire        pred_taken_0_dec_o,
+    output wire        pred_taken_1_dec_o,
     input  wire [31:0] inst0_dec_i,
     input  wire [31:0] inst1_dec_i,
     input  wire [`CTRL_BUS] ctrl0_dec_i,
@@ -26,22 +33,33 @@ module pipeline
     output reg  [31:0] inst1_issue_o = 0,
     output reg  [`CTRL_BUS] ctrl0_issue_o = 0,
     output reg  [`CTRL_BUS] ctrl1_issue_o = 0,
+    output reg         pred_0_issue_o = 0,
+    output reg         pred_1_issue_o = 0,
+    output reg  [31:0] pred_tgt_0_issue_o = 0,
+    output reg  [31:0] pred_tgt_1_issue_o = 0,
     input  wire [31:0] issued_inst0_i,
     input  wire [31:0] issued_inst1_i,
     input  wire [`CTRL_BUS] issued_ctrl0_i,
     input  wire [`CTRL_BUS] issued_ctrl1_i,
     input  wire        issue0_special_stall_i,
     input  wire        issue1_special_stall_i,
+    input  wire        issued_pred_0_i,
+    input  wire        issued_pred_1_i,
+    input  wire [31:0] issued_pred_tgt_0_i,
+    input  wire [31:0] issued_pred_tgt_1_i,
 
     // execute
     output reg  [31:0] inst0_exec_o      = 0,
     output reg  [31:0] inst1_exec_o      = 0,
     output reg  [`CTRL_BUS] ctrl0_exec_o = 0,
     output reg  [`CTRL_BUS] ctrl1_exec_o = 0,
+    output reg         pred_exec_o       = 0,
+    output reg  [31:0] pred_tgt_exec_o   = 0,
     output reg  [31:0] pc_0_exec_o       = 0,
     output reg  [31:0] pc_1_exec_o       = 0,
     input  wire [31:0] alu_0_exec_i,
     input  wire [31:0] alu_1_exec_i,
+    input  wire        exec_wrong_branch_i,
     input  wire        exec_stall_i,
     
     // lsu
@@ -86,36 +104,57 @@ module pipeline
     *  F1 / F2 or MEM Buffer
     */
     reg  [31:0] pc_f2_r = 0;
+    reg         pred_f2_0 = 0;
+    reg         pred_f2_1 = 0;
+    reg  [31:0] pred_tgt_f2_0 = 0;
+    reg  [31:0] pred_tgt_f2_1 = 0;
 
     always @(posedge clock_i) begin
         if (frontend_we_w) begin
-            pc_f2_r   <= pc_f1_i;
+            pred_f2_0     <= f1_pred_0_i;
+            pred_f2_1     <= f1_pred_1_i;
+            pred_tgt_f2_0 <= f1_pred_tgt_0_i;
+            pred_tgt_f2_1 <= f1_pred_tgt_1_i;
+            pc_f2_r       <= f1_pc_i;
         end
     end
 
+    assign f2_pred_0_o = pred_f2_0;
     assign iaddr_f2_o = pc_f2_r[09:0];
 
     /*
-    *  F2 or MEM / Decode Buffers
+    *  F2 / Decode Buffers
     */
     reg         dec0_sr = 0;
     reg         dec1_sr = 0;
     reg [31:0]  pc_dec0 = 0;
     reg [31:0]  pc_dec1 = 0;
 
+    reg         pred_dec_0 = 0;
+    reg         pred_dec_1 = 0;
+    reg [31:0]  pred_tgt_dec_0 = 0;
+    reg [31:0]  pred_tgt_dec_1 = 0;
+
     always @(posedge clock_i) begin
         // Fetch Slot 0
         if (dec0_sr) begin
         end else if (frontend_we_w) begin
-            pc_dec0     <= pc_f2_r;
+            pc_dec0             <= pc_f2_r;
+            pred_dec_0          <= pred_f2_0;
+            pred_tgt_dec_0      <= pred_tgt_f2_0;
         end
 
         // Fetch Slot 1
         if (dec0_sr) begin
         end else if (frontend_we_w) begin
-            pc_dec1     <= pc_f2_r + 4;
+            pc_dec1             <= pc_f2_r + 4;
+            pred_dec_1          <= pred_f2_1;
+            pred_tgt_dec_1      <= pred_tgt_f2_1;
         end
     end
+
+    assign pred_taken_0_dec_o = pred_dec_0;
+    assign pred_taken_1_dec_o = pred_dec_1;
 
     /*
     *  Decode / Issue Buffers
@@ -126,22 +165,30 @@ module pipeline
     always @(posedge clock_i) begin
         // Issue 0
         if (issue1_stall_w) begin
-            inst0_issue_o    <= 0;
-            ctrl0_issue_o    <= 0;
+            inst0_issue_o      <= 0;
+            ctrl0_issue_o      <= 0;
+            pred_0_issue_o     <= 0;
+            pred_tgt_0_issue_o <= 0;
         end else if (backend_we_w && !issue0_stall_w) begin
-            inst0_issue_o    <= inst0_dec_i;
-            ctrl0_issue_o    <= ctrl0_dec_i;
-            pc_issue0        <= pc_dec0;
+            inst0_issue_o      <= inst0_dec_i;
+            ctrl0_issue_o      <= ctrl0_dec_i;
+            pc_issue0          <= pc_dec0;
+            pred_0_issue_o       <= pred_dec_0;
+            pred_tgt_0_issue_o   <= pred_tgt_dec_0;
         end
 
         // Issue 1
         if (issue0_stall_w) begin
-            inst1_issue_o    <= 0;
-            ctrl1_issue_o    <= 0;
+            inst1_issue_o      <= 0;
+            ctrl1_issue_o      <= 0;
+            pred_1_issue_o     <= 0;
+            pred_tgt_1_issue_o <= 0;
         end else if (backend_we_w && !issue1_stall_w) begin
-            inst1_issue_o    <= inst1_dec_i;
-            ctrl1_issue_o    <= ctrl1_dec_i;
-            pc_issue1        <= pc_dec1;
+            inst1_issue_o      <= inst1_dec_i;
+            ctrl1_issue_o      <= ctrl1_dec_i;
+            pc_issue1          <= pc_dec1;
+            pred_1_issue_o     <= pred_dec_1;
+            pred_tgt_1_issue_o <= pred_tgt_dec_1;
         end
     end
 
@@ -150,17 +197,21 @@ module pipeline
     */
     always @(posedge clock_i) begin
         // Exec 0
-        if (issue0_stall_w) begin
+        if (issue0_stall_w || exec_wrong_branch_i) begin
             inst0_exec_o        <= 0;
             ctrl0_exec_o        <= 0;
+            pred_exec_o         <= 0;
+            pred_tgt_exec_o     <= 0;
         end else if (backend_we_w) begin
             inst0_exec_o        <= issued_inst0_i;
             ctrl0_exec_o        <= issued_ctrl0_i;
             pc_0_exec_o         <= pc_issue0;
+            pred_exec_o         <= issued_pred_0_i;
+            pred_tgt_exec_o     <= issued_pred_tgt_0_i;
         end
 
         // Exec 1
-        if (issue1_stall_w) begin
+        if (issue1_stall_w || exec_wrong_branch_i) begin
             inst1_exec_o        <= 0;
             ctrl1_exec_o        <= 0;
         end else if (backend_we_w) begin

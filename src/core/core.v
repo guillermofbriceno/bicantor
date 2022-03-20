@@ -21,15 +21,22 @@ module core
         .frontend_we_o          (frontend_we),
 
         // f1
-        .pc_f1_i                (pc_f1_ow),
+        .f1_pc_i                (f1_pc_ow),
+        .f1_pred_0_i            (f1_pred_0_ow),
+        .f1_pred_1_i            (f1_pred_1_ow),
+        .f1_pred_tgt_0_i        (f1_pred_tgt_0_ow),
+        .f1_pred_tgt_1_i        (f1_pred_tgt_1_ow),
         .f1_stall_i             (f1_stall_ow),
 
         // f2 or imem
         .iaddr_f2_o             (addr_o),
+        .f2_pred_0_o            (f2_pred_0_iw),
         .idata_f2_i             (data_i),
         .f2_stall_i             (f2_stall_ow),
 
         // decode
+        .pred_taken_0_dec_o     (pred_taken_0_dec_iw),
+        .pred_taken_1_dec_o     (pred_taken_1_dec_iw),
         .inst0_dec_i            (inst0_dec_ow),
         .inst1_dec_i            (inst1_dec_ow),
         .ctrl0_dec_i            (ctrl0_dec_ow),
@@ -41,19 +48,28 @@ module core
         .inst1_issue_o          (inst1_issue_iw),
         .ctrl0_issue_o          (ctrl0_issue_iw),
         .ctrl1_issue_o          (ctrl1_issue_iw),
+        .pred_0_issue_o         (pred_0_issue_iw),
+        .pred_1_issue_o         (pred_1_issue_iw),
+        .pred_tgt_0_issue_o     (pred_tgt_0_issue_iw),
+        .pred_tgt_1_issue_o     (pred_tgt_1_issue_iw),
         .issued_inst0_i         (issued_inst0_ow),
         .issued_inst1_i         (issued_inst1_ow),
         .issued_ctrl0_i         (issued_ctrl0_ow),
         .issued_ctrl1_i         (issued_ctrl1_ow),
         .issue0_special_stall_i (issue0_special_stall_ow),
         .issue1_special_stall_i (issue1_special_stall_ow),
-
+        .issued_pred_0_i        (issued_pred_0_ow),
+        .issued_pred_1_i        (issued_pred_1_ow),
+        .issued_pred_tgt_0_i    (issued_pred_tgt_0_ow),
+        .issued_pred_tgt_1_i    (issued_pred_tgt_1_ow),
 
         // execute
         .inst0_exec_o           (inst0_exec_iw),
         .inst1_exec_o           (inst1_exec_iw),
         .ctrl0_exec_o           (ctrl0_exec_iw),
         .ctrl1_exec_o           (ctrl1_exec_iw),
+        .pred_tgt_exec_o        (pred_tgt_exec_iw),
+        .pred_exec_o            (pred_taken_exec_iw),
         .pc_0_exec_o            (pc_0_exec_iw),
         .pc_1_exec_o            (pc_1_exec_iw),
         .alu_0_exec_i           (alu0_exec_ow),
@@ -82,27 +98,75 @@ module core
 
     );
 
-    wire [31:0] pc_f1_ow;
+
+    wire        update_pht_iw;
+    wire        update_btb_iw;
+    wire [31:0] corr_tgt_iw;
+    wire        corr_taken_iw;
 
     fetch1 FETCH1(
         .clock_i                (clock_i),
         .pc_we_i                (frontend_we),
-        .pc_o                   (pc_f1_ow),
+        .update_pc_i            (pc_exec_0_ow),
+        .update_tgt_i           (corr_tgt_exec_ow),
+        .last_br_i              (corr_taken_exec_ow),
+        .wrong_pred_i           (wrong_pred_exec_ow),
+        .fixed_pc_i             (fixed_pc_ow),
+
+        .pred_0_o               (f1_pred_0_ow),
+        .pred_1_o               (f1_pred_1_ow),
+        .pred_tgt_0_o           (f1_pred_tgt_0_ow),
+        .pred_tgt_1_o           (f1_pred_tgt_1_ow),
+        .pc_o                   (f1_pc_ow),
         .stall_o                (f1_stall_ow)
     );
 
+    wire [31:0] f1_pc_ow;
     wire        f1_stall_ow;
+    wire [31:0] f1_pred_tgt_0_ow;
+    wire [31:0] f1_pred_tgt_1_ow;
+    wire        f1_pred_0_ow;
+    wire        f1_pred_1_ow;
+
 
     // pipe
 
+    wire        f2_pred_1_iw;
+
+    fetch2 FETCH2(
+        .clock_i                (clock_i),
+        .idata_i                (data_i),
+        .branch_mispred_i       (wrong_pred_exec_ow),
+        .wasnt_branch_i         (wasnt_branch_ow),
+        .bubble_1_i             (f2_pred_1_iw),
+
+        .inst0_o                (f2_inst0_ow),
+        .inst1_o                (f2_inst1_ow)
+    );
+
+    wire [31:0] f2_inst0_ow;
+    wire [31:0] f2_inst1_ow;
+
+    // pipe
+
+    // inst-ins not pipelined because imemory is read synchronous
+    wire        pred_taken_0_dec_iw;
+    wire        pred_taken_1_dec_iw;
+
+
     decode DECODE(
-        .inst0_i                (data_i[63:32]),
-        .inst1_i                (data_i[31:00]),
+        .inst0_i                (f2_inst0_ow),
+        .inst1_i                (f2_inst1_ow),
+        .pred_taken_0_i         (pred_taken_0_dec_iw),
+        .pred_taken_1_i         (pred_taken_1_dec_iw),
 
         .inst0_o                (inst0_dec_ow),
         .inst1_o                (inst1_dec_ow),
         .ctrl0_o                (ctrl0_dec_ow),
         .ctrl1_o                (ctrl1_dec_ow),
+
+        .wasnt_branch_o         (wasnt_branch_ow),
+
         .stall_o                (dec_stall_ow)
     );
 
@@ -111,6 +175,7 @@ module core
     wire [`CTRL_BUS] ctrl0_dec_ow;
     wire [`CTRL_BUS] ctrl1_dec_ow;
     wire             dec_stall_ow;
+    wire             wasnt_branch_ow;
 
     // pipe
     
@@ -118,12 +183,20 @@ module core
     wire [31:0] inst1_issue_iw;
     wire [`CTRL_BUS] ctrl0_issue_iw;
     wire [`CTRL_BUS] ctrl1_issue_iw;
+    wire        pred_0_issue_iw;
+    wire        pred_1_issue_iw;
+    wire [31:0] pred_tgt_0_issue_iw;
+    wire [31:0] pred_tgt_1_issue_iw;
 
     issue ISSUE(
         .clock_i                (clock_i),
 
         .inst0_i                (inst0_issue_iw),
         .inst1_i                (inst1_issue_iw),
+        .pred_0_i               (pred_0_issue_iw),
+        .pred_1_i               (pred_1_issue_iw),
+        .pred_tgt_0_i           (pred_tgt_0_issue_iw),
+        .pred_tgt_1_i           (pred_tgt_1_issue_iw),
         
         .ctrl0_i                (ctrl0_issue_iw),
         .ctrl1_i                (ctrl1_issue_iw),
@@ -146,7 +219,11 @@ module core
         .issued_ctrl0_o         (issued_ctrl0_ow),
         .issued_ctrl1_o         (issued_ctrl1_ow),
         .issued_inst0_o         (issued_inst0_ow),
-        .issued_inst1_o         (issued_inst1_ow)
+        .issued_inst1_o         (issued_inst1_ow),
+        .issued_pred_0_o        (issued_pred_0_ow),
+        .issued_pred_1_o        (issued_pred_1_ow),
+        .issued_pred_tgt_0_o    (issued_pred_tgt_0_ow),
+        .issued_pred_tgt_1_o    (issued_pred_tgt_1_ow)
     );
 
     wire                issue0_special_stall_ow;
@@ -155,7 +232,10 @@ module core
     wire [`CTRL_BUS]    issued_ctrl1_ow;
     wire [31:0]         issued_inst0_ow;
     wire [31:0]         issued_inst1_ow;
-
+    wire                issued_pred_0_ow;
+    wire                issued_pred_1_ow;
+    wire [31:0]         issued_pred_tgt_0_ow;
+    wire [31:0]         issued_pred_tgt_1_ow;
 
     // pipe
 
@@ -169,6 +249,8 @@ module core
     wire [31:0] rs2_data0_exec_iw;
     wire [31:0] rs1_data1_exec_iw;
     wire [31:0] rs2_data1_exec_iw;
+    wire [31:0] pred_tgt_exec_iw;
+    wire        pred_taken_exec_iw;
 
     execute EXECUTE( 
         .inst0_i                (inst0_exec_iw),
@@ -198,12 +280,27 @@ module core
         .bypass_lsu1_i          (alu_1_lsu_iw),
         .bypass_wb1_i           (rd_data1_wb_ow),
 
+        .pred_tgt_i             (pred_tgt_exec_iw),
+        .pred_taken_i           (pred_taken_exec_iw),
+
         .alu0_o                 (alu0_exec_ow),
-        .alu1_o                 (alu1_exec_ow)
+        .alu1_o                 (alu1_exec_ow),
+
+        .update_pht_o           (update_pht_iw),
+        .update_btb_o           (update_btb_iw),
+        .corr_tgt_o             (corr_tgt_exec_ow),
+        .corr_taken_o           (corr_taken_exec_ow),
+        .wrong_pred_o           (wrong_pred_exec_ow),
+        .fixed_pc_o             (fixed_pc_ow)
     );
 
     wire [31:0]         alu0_exec_ow;
     wire [31:0]         alu1_exec_ow;
+    wire [31:0]         corr_tgt_exec_ow;
+    wire [31:0]         pc_exec_0_ow;
+    wire                corr_taken_exec_ow;
+    wire                wrong_pred_exec_ow;
+    wire [31:0]         fixed_pc_ow;
 
     // pipe
 
