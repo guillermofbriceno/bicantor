@@ -33,6 +33,8 @@ module core
         .f2_pred_0_o            (f2_pred_0_iw),
         .idata_f2_i             (data_i),
         .f2_stall_i             (f2_stall_ow),
+        .zero_0_data_f2_i       (zero_0_data_f2_ow),
+        .zero_1_data_f2_i       (zero_1_data_f2_ow),
 
         // decode
         .pred_taken_0_dec_o     (pred_taken_0_dec_iw),
@@ -52,6 +54,8 @@ module core
         .pred_1_issue_o         (pred_1_issue_iw),
         .pred_tgt_0_issue_o     (pred_tgt_0_issue_iw),
         .pred_tgt_1_issue_o     (pred_tgt_1_issue_iw),
+        .pc_0_issue_o           (pc_0_issue_iw),
+        .pc_1_issue_o           (pc_1_issue_iw),
         .issued_inst0_i         (issued_inst0_ow),
         .issued_inst1_i         (issued_inst1_ow),
         .issued_ctrl0_i         (issued_ctrl0_ow),
@@ -62,6 +66,8 @@ module core
         .issued_pred_1_i        (issued_pred_1_ow),
         .issued_pred_tgt_0_i    (issued_pred_tgt_0_ow),
         .issued_pred_tgt_1_i    (issued_pred_tgt_1_ow),
+        .issued_pc_0_i          (issued_pc_0_ow),
+        .issued_pc_1_i          (issued_pc_1_ow),
 
         // execute
         .inst0_exec_o           (inst0_exec_iw),
@@ -74,6 +80,7 @@ module core
         .pc_1_exec_o            (pc_1_exec_iw),
         .alu_0_exec_i           (alu0_exec_ow),
         .alu_1_exec_i           (alu1_exec_ow),
+        .exec_wrong_branch_i    (wrong_pred_exec_ow),
         .exec_stall_i           (exec_stall_ow),
 
         // lsu
@@ -99,17 +106,15 @@ module core
     );
 
 
-    wire        update_pht_iw;
-    wire        update_btb_iw;
-    wire [31:0] corr_tgt_iw;
-    wire        corr_taken_iw;
 
     fetch1 FETCH1(
         .clock_i                (clock_i),
         .pc_we_i                (frontend_we),
-        .update_pc_i            (pc_exec_0_ow),
+        .update_pc_i            (pc_0_exec_iw),
         .update_tgt_i           (corr_tgt_exec_ow),
         .last_br_i              (corr_taken_exec_ow),
+        .update_pht_i           (update_pht_exec_ow),
+        .update_btb_i           (update_btb_exec_ow),
         .wrong_pred_i           (wrong_pred_exec_ow),
         .fixed_pc_i             (fixed_pc_ow),
 
@@ -131,21 +136,25 @@ module core
 
     // pipe
 
-    wire        f2_pred_1_iw;
+    wire        f2_pred_0_iw;
 
     fetch2 FETCH2(
         .clock_i                (clock_i),
         .idata_i                (data_i),
         .branch_mispred_i       (wrong_pred_exec_ow),
         .wasnt_branch_i         (wasnt_branch_ow),
-        .bubble_1_i             (f2_pred_1_iw),
+        .bubble_1_i             (f2_pred_0_iw),
 
         .inst0_o                (f2_inst0_ow),
-        .inst1_o                (f2_inst1_ow)
+        .inst1_o                (f2_inst1_ow),
+        .zero_0_data_o          (zero_0_data_f2_ow),
+        .zero_1_data_o          (zero_1_data_f2_ow)
     );
 
     wire [31:0] f2_inst0_ow;
     wire [31:0] f2_inst1_ow;
+    wire        zero_0_data_f2_ow;
+    wire        zero_1_data_f2_ow;
 
     // pipe
 
@@ -187,6 +196,8 @@ module core
     wire        pred_1_issue_iw;
     wire [31:0] pred_tgt_0_issue_iw;
     wire [31:0] pred_tgt_1_issue_iw;
+    wire [31:0] pc_0_issue_iw;
+    wire [31:0] pc_1_issue_iw;
 
     issue ISSUE(
         .clock_i                (clock_i),
@@ -209,6 +220,9 @@ module core
         .rd_data1_i             (rd_data1_wb_ow),
         .rd_write1_i            (ctrl1_wb_iw[`REGWRITE]),
 
+        .pc_0_i                 (pc_0_issue_iw),
+        .pc_1_i                 (pc_1_issue_iw),
+
         .rs1_data0_o            (rs1_data0_exec_iw),
         .rs2_data0_o            (rs2_data0_exec_iw),
         .rs1_data1_o            (rs1_data1_exec_iw),
@@ -223,7 +237,9 @@ module core
         .issued_pred_0_o        (issued_pred_0_ow),
         .issued_pred_1_o        (issued_pred_1_ow),
         .issued_pred_tgt_0_o    (issued_pred_tgt_0_ow),
-        .issued_pred_tgt_1_o    (issued_pred_tgt_1_ow)
+        .issued_pred_tgt_1_o    (issued_pred_tgt_1_ow),
+        .issued_pc_0_o          (issued_pc_0_ow),
+        .issued_pc_1_o          (issued_pc_1_ow)
     );
 
     wire                issue0_special_stall_ow;
@@ -236,6 +252,8 @@ module core
     wire                issued_pred_1_ow;
     wire [31:0]         issued_pred_tgt_0_ow;
     wire [31:0]         issued_pred_tgt_1_ow;
+    wire [31:0]         issued_pc_0_ow;
+    wire [31:0]         issued_pc_1_ow;
 
     // pipe
 
@@ -286,8 +304,8 @@ module core
         .alu0_o                 (alu0_exec_ow),
         .alu1_o                 (alu1_exec_ow),
 
-        .update_pht_o           (update_pht_iw),
-        .update_btb_o           (update_btb_iw),
+        .update_pht_o           (update_pht_exec_ow),
+        .update_btb_o           (update_btb_exec_ow),
         .corr_tgt_o             (corr_tgt_exec_ow),
         .corr_taken_o           (corr_taken_exec_ow),
         .wrong_pred_o           (wrong_pred_exec_ow),
@@ -297,10 +315,11 @@ module core
     wire [31:0]         alu0_exec_ow;
     wire [31:0]         alu1_exec_ow;
     wire [31:0]         corr_tgt_exec_ow;
-    wire [31:0]         pc_exec_0_ow;
     wire                corr_taken_exec_ow;
     wire                wrong_pred_exec_ow;
     wire [31:0]         fixed_pc_ow;
+    wire                update_pht_exec_ow;
+    wire                update_btb_exec_ow;
 
     // pipe
 

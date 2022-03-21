@@ -50,6 +50,9 @@ module fetch1
             3'b100:  pc_mux_out <= pred_tgt_0_o;
             3'b110:  pc_mux_out <= pred_tgt_0_o;
             3'b001:  pc_mux_out <= fixed_pc_i;
+            3'b011:  pc_mux_out <= fixed_pc_i;
+            3'b111:  pc_mux_out <= fixed_pc_i;
+            3'b101:  pc_mux_out <= fixed_pc_i;
             default: pc_mux_out <= 32'bX;
         endcase
     end
@@ -102,10 +105,13 @@ module pattern_history_table
 
     reg  [31:0] pc_internal = 0;
 
-    wire [ABITS-1:0] xored_address;
+    wire  [ABITS-1:0] xored_address;
+    wire [ABITS-1:0] wr_xored_address;
 
-    assign xored_address    = pc_internal[`TAG_RANGE(ABITS)] ^ ghr;
-    assign wr_xored_address = update_pc_i[`TAG_RANGE(ABITS)] ^ ghr;
+    //assign xored_address    = pc_internal[`TAG_RANGE(ABITS)] ^ ghr;
+    //assign wr_xored_address = update_pc_i[`TAG_RANGE(ABITS)] ^ ghr;
+    assign xored_address    = pc_internal[`IDX_RANGE(ABITS)];
+    assign wr_xored_address = update_pc_i[`IDX_RANGE(ABITS)];
 
     assign pred_0_o = pht[xored_address  ] > 1;
     assign pred_1_o = pht[xored_address+1] > 1;
@@ -120,13 +126,18 @@ module pattern_history_table
     always @(posedge clock_i) begin
         pc_internal <= pc_i;
         if (update_i) begin
-            ghr <= (ghr << 1) || last_br_i;
+            ghr <= {ghr[ABITS-1:0], last_br_i};
             if      (  last_br_i && ( (pht[wr_xored_address] + 1) <= 2 ) )
                 pht[wr_xored_address] <= pht[wr_xored_address] + 1;
             else if ( !last_br_i && ( (pht[wr_xored_address] - 1) >= 0 ) )
                 pht[wr_xored_address] <= pht[wr_xored_address] - 1;
         end
     end
+
+//    always @(posedge clock_i) begin
+//        //xored_address <= pc_internal[`TAG_RANGE(ABITS)] ^ ghr;
+//        xored_address <= pc_i[`IDX_RANGE(ABITS)];
+//    end
     
 endmodule
 

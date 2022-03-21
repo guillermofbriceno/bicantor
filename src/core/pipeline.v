@@ -18,6 +18,8 @@ module pipeline
     output wire        f2_pred_0_o,
     input  wire [63:0] idata_f2_i,
     input  wire        f2_stall_i,
+    input  wire        zero_0_data_f2_i,
+    input  wire        zero_1_data_f2_i,
 
     // decode
     output wire        pred_taken_0_dec_o,
@@ -37,6 +39,8 @@ module pipeline
     output reg         pred_1_issue_o = 0,
     output reg  [31:0] pred_tgt_0_issue_o = 0,
     output reg  [31:0] pred_tgt_1_issue_o = 0,
+    output reg  [31:0] pc_0_issue_o = 0,
+    output reg  [31:0] pc_1_issue_o = 0,
     input  wire [31:0] issued_inst0_i,
     input  wire [31:0] issued_inst1_i,
     input  wire [`CTRL_BUS] issued_ctrl0_i,
@@ -47,6 +51,8 @@ module pipeline
     input  wire        issued_pred_1_i,
     input  wire [31:0] issued_pred_tgt_0_i,
     input  wire [31:0] issued_pred_tgt_1_i,
+    input  wire [31:0] issued_pc_0_i,
+    input  wire [31:0] issued_pc_1_i,
 
     // execute
     output reg  [31:0] inst0_exec_o      = 0,
@@ -90,8 +96,8 @@ module pipeline
     /*
     *  Stall Logic
     */
-    assign issue0_stall_w = issue0_special_stall_i && backend_we_w;
-    assign issue1_stall_w = issue1_special_stall_i && backend_we_w;
+    assign issue0_stall_w = issue0_special_stall_i && backend_we_w && !exec_wrong_branch_i;
+    assign issue1_stall_w = issue1_special_stall_i && backend_we_w && !exec_wrong_branch_i;
 
     assign backend_we_w  = ! ( f1_stall_i || f2_stall_i || dec_stall_i || exec_stall_i || mem_stall_i || wb_stall_i );
     assign frontend_we_w = ( (backend_we_w) && (!issue0_stall_w) && (!issue1_stall_w) );
@@ -137,7 +143,9 @@ module pipeline
 
     always @(posedge clock_i) begin
         // Fetch Slot 0
-        if (dec0_sr) begin
+        if (0) begin
+        //if (zero_0_data_f2_i) begin
+        //    pred_dec_0          <= 0;
         end else if (frontend_we_w) begin
             pc_dec0             <= pc_f2_r;
             pred_dec_0          <= pred_f2_0;
@@ -145,7 +153,9 @@ module pipeline
         end
 
         // Fetch Slot 1
-        if (dec0_sr) begin
+        if (0) begin
+        //if (zero_0_data_f2_i) begin
+        //    pred_dec_1          <= 0;
         end else if (frontend_we_w) begin
             pc_dec1             <= pc_f2_r + 4;
             pred_dec_1          <= pred_f2_1;
@@ -159,9 +169,6 @@ module pipeline
     /*
     *  Decode / Issue Buffers
     */
-    reg [31:0]  pc_issue0 = 0;
-    reg [31:0]  pc_issue1 = 0;
-
     always @(posedge clock_i) begin
         // Issue 0
         if (issue1_stall_w) begin
@@ -172,9 +179,9 @@ module pipeline
         end else if (backend_we_w && !issue0_stall_w) begin
             inst0_issue_o      <= inst0_dec_i;
             ctrl0_issue_o      <= ctrl0_dec_i;
-            pc_issue0          <= pc_dec0;
-            pred_0_issue_o       <= pred_dec_0;
-            pred_tgt_0_issue_o   <= pred_tgt_dec_0;
+            pc_0_issue_o       <= pc_dec0;
+            pred_0_issue_o     <= pred_dec_0;
+            pred_tgt_0_issue_o <= pred_tgt_dec_0;
         end
 
         // Issue 1
@@ -186,7 +193,7 @@ module pipeline
         end else if (backend_we_w && !issue1_stall_w) begin
             inst1_issue_o      <= inst1_dec_i;
             ctrl1_issue_o      <= ctrl1_dec_i;
-            pc_issue1          <= pc_dec1;
+            pc_1_issue_o       <= pc_dec1;
             pred_1_issue_o     <= pred_dec_1;
             pred_tgt_1_issue_o <= pred_tgt_dec_1;
         end
@@ -205,7 +212,7 @@ module pipeline
         end else if (backend_we_w) begin
             inst0_exec_o        <= issued_inst0_i;
             ctrl0_exec_o        <= issued_ctrl0_i;
-            pc_0_exec_o         <= pc_issue0;
+            pc_0_exec_o         <= issued_pc_0_i;
             pred_exec_o         <= issued_pred_0_i;
             pred_tgt_exec_o     <= issued_pred_tgt_0_i;
         end
@@ -217,7 +224,7 @@ module pipeline
         end else if (backend_we_w) begin
             inst1_exec_o        <= issued_inst1_i;
             ctrl1_exec_o        <= issued_ctrl1_i;
-            pc_1_exec_o         <= pc_issue1;
+            pc_1_exec_o         <= issued_pc_1_i;
         end
    end
 

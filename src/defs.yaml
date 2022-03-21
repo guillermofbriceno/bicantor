@@ -107,15 +107,23 @@
       - opcode:         "1101111"
         "REGWRITE":     1
         "JAL":          1
+        "ISSUE_PRI":    1
+        "ISSUE_SLOT":   0
 
     "JALR":
       - opcode:         "1100111"
         "REGWRITE":     1
         "JALR":         1
+        "ISSUE_PRI":    1
+        "ISSUE_SLOT":   0
 
     "BRANCH":
       - opcode:         "1100011"
         "COND_BRANCH":  1
         "FUNCT3_SEL":   1
+        "ALU_SRC1_MUX": "RS1_SEL"
+        "ALU_SRC2_MUX": "RS2_SEL"
         "RS1_ACTIVE":   1
         "RS2_ACTIVE":   1
+        "ISSUE_PRI":    1
+        "ISSUE_SLOT":   0

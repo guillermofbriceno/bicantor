@@ -28,15 +28,14 @@ module core_tb ();
             $dumpvars(0, CORE.ISSUE.REGFILE.registers[i]);
         end
 
-        //$dumpvars(0, INSTMEM.instmemory);
         //for(i=0; i < 1024; i=i+1) begin
-        //    $dumpvars(0, INSTMEM.instmemory[i]);
+        //    $dumpvars(0, CORE.FETCH1.PHT.pht[i]);
         //end
 
         for (i=0; i < 5000; i=i+1) begin
-                #1;
+                #0.5;
                 clock = 1;
-                #1;
+                #0.5;
                 clock = 0;
         end
 

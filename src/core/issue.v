@@ -21,6 +21,9 @@ module issue
     input  wire [31:0] rd_data1_i,
     input  wire        rd_write1_i,
 
+    input  wire [31:0] pc_0_i,
+    input  wire [31:0] pc_1_i,
+
     output wire [31:0] rs1_data0_o,
     output wire [31:0] rs2_data0_o,
 
@@ -37,7 +40,9 @@ module issue
     output  wire             issued_pred_0_o,
     output  wire             issued_pred_1_o,
     output  wire [31:0]      issued_pred_tgt_0_o,
-    output  wire [31:0]      issued_pred_tgt_1_o
+    output  wire [31:0]      issued_pred_tgt_1_o,
+    output  wire [31:0]      issued_pc_0_o,
+    output  wire [31:0]      issued_pc_1_o
 );
 
     wire                    issue0_sw_req;
@@ -77,6 +82,8 @@ module issue
     assign issued_pred_1_o     = (switch) ? pred_0_i    : pred_1_i;
     assign issued_pred_tgt_0_o = (switch) ? pred_tgt_1_i: pred_tgt_0_i;
     assign issued_pred_tgt_1_o = (switch) ? pred_tgt_0_i: pred_tgt_1_i;
+    assign issued_pc_0_o       = (switch) ? pc_1_i      : pc_0_i;
+    assign issued_pc_1_o       = (switch) ? pc_0_i      : pc_1_i;
 
 
 
