@@ -177,8 +177,8 @@ module branch_target_buffer
     assign tag_out_1        = tags[pc_internal[`IDX_RANGE(ABITS)] + 1];
 
     // Internal Logic
-    assign hit_0_o = tag_out_0 == pc_i[`TAG_RANGE(ABITS)];
-    assign hit_1_o = tag_out_1 == pc_i[`TAG_RANGE(ABITS)];
+    assign hit_0_o = tag_out_0 == pc_internal[`TAG_RANGE(ABITS)];
+    assign hit_1_o = tag_out_1 == pc_internal[`TAG_RANGE(ABITS)];
 
     integer i;
     initial begin

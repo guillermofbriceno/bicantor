@@ -16,10 +16,10 @@ module pipeline
     // f2 or imem
     output wire [09:0] iaddr_f2_o,
     output wire        f2_pred_0_o,
+    output reg         pred_f2_1_o,
     input  wire [63:0] idata_f2_i,
     input  wire        f2_stall_i,
-    input  wire        zero_0_data_f2_i,
-    input  wire        zero_1_data_f2_i,
+    output wire        pred_f2_1_i,
 
     // decode
     output wire        pred_taken_0_dec_o,
@@ -111,14 +111,14 @@ module pipeline
     */
     reg  [31:0] pc_f2_r = 0;
     reg         pred_f2_0 = 0;
-    reg         pred_f2_1 = 0;
+    //reg         pred_f2_1 = 0;
     reg  [31:0] pred_tgt_f2_0 = 0;
     reg  [31:0] pred_tgt_f2_1 = 0;
 
     always @(posedge clock_i) begin
         if (frontend_we_w) begin
             pred_f2_0     <= f1_pred_0_i;
-            pred_f2_1     <= f1_pred_1_i;
+            pred_f2_1_o   <= f1_pred_1_i;
             pred_tgt_f2_0 <= f1_pred_tgt_0_i;
             pred_tgt_f2_1 <= f1_pred_tgt_1_i;
             pc_f2_r       <= f1_pc_i;
@@ -158,7 +158,7 @@ module pipeline
         //    pred_dec_1          <= 0;
         end else if (frontend_we_w) begin
             pc_dec1             <= pc_f2_r + 4;
-            pred_dec_1          <= pred_f2_1;
+            pred_dec_1          <= pred_f2_1_i;
             pred_tgt_dec_1      <= pred_tgt_f2_1;
         end
     end
@@ -171,7 +171,7 @@ module pipeline
     */
     always @(posedge clock_i) begin
         // Issue 0
-        if (issue1_stall_w) begin
+        if (issue1_stall_w || exec_wrong_branch_i) begin
             inst0_issue_o      <= 0;
             ctrl0_issue_o      <= 0;
             pred_0_issue_o     <= 0;
@@ -185,7 +185,7 @@ module pipeline
         end
 
         // Issue 1
-        if (issue0_stall_w) begin
+        if (issue0_stall_w || exec_wrong_branch_i) begin
             inst1_issue_o      <= 0;
             ctrl1_issue_o      <= 0;
             pred_1_issue_o     <= 0;
@@ -264,6 +264,7 @@ module pipeline
             alu_0_wb_o      <= alu_0_lsu_o;
             ctrl0_wb_o      <= ctrl0_lsu_o;
             rd_addr_0_wb_o  <= rd_addr_0_lsu_o;
+            pc_0_wb_o       <= pc_0_lsu;
         end
 
         // Exec 1
@@ -272,6 +273,7 @@ module pipeline
             alu_1_wb_o      <= alu_1_lsu_o;
             ctrl1_wb_o      <= ctrl1_lsu_o;
             rd_addr_1_wb_o  <= rd_addr_1_lsu_o;
+            pc_1_wb_o       <= pc_1_lsu;
         end
    end
 

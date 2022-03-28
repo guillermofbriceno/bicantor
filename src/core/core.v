@@ -6,7 +6,8 @@ module core
     input  wire [63:0]  data_i,
 
     output wire [09:0]  addr_o,
-    output wire         imemstall_o
+    output wire         imemstall_o,
+    output wire         imem_sr_o
 );
     reg exec_stall_ow = 0; //temp
     reg f2_stall_ow   = 0; //temp
@@ -15,6 +16,7 @@ module core
 
     wire frontend_we;
     assign imemstall_o = frontend_we;
+    assign imem_sr_o = f2_flush_ow;
     
     pipeline PIPELINE(
         .clock_i                (clock_i),
@@ -31,10 +33,10 @@ module core
         // f2 or imem
         .iaddr_f2_o             (addr_o),
         .f2_pred_0_o            (f2_pred_0_iw),
+        .pred_f2_1_o            (f2_pred_1_iw),
         .idata_f2_i             (data_i),
+        .pred_f2_1_i            (f2_pred_1_iw),
         .f2_stall_i             (f2_stall_ow),
-        .zero_0_data_f2_i       (zero_0_data_f2_ow),
-        .zero_1_data_f2_i       (zero_1_data_f2_ow),
 
         // decode
         .pred_taken_0_dec_o     (pred_taken_0_dec_iw),
@@ -137,24 +139,26 @@ module core
     // pipe
 
     wire        f2_pred_0_iw;
+    wire        f2_pred_1_iw;
 
     fetch2 FETCH2(
         .clock_i                (clock_i),
         .idata_i                (data_i),
         .branch_mispred_i       (wrong_pred_exec_ow),
         .wasnt_branch_i         (wasnt_branch_ow),
-        .bubble_1_i             (f2_pred_0_iw),
+        .zero_1_i               (f2_pred_0_iw),
+        .pred_1_i               (f2_pred_1_iw),
 
         .inst0_o                (f2_inst0_ow),
         .inst1_o                (f2_inst1_ow),
-        .zero_0_data_o          (zero_0_data_f2_ow),
-        .zero_1_data_o          (zero_1_data_f2_ow)
+        .pred_1_o               (f2_pred_1_ow),
+        .branch_flush_o         (f2_flush_ow)
     );
 
     wire [31:0] f2_inst0_ow;
     wire [31:0] f2_inst1_ow;
-    wire        zero_0_data_f2_ow;
-    wire        zero_1_data_f2_ow;
+    wire        f2_pred_1_ow;
+    wire        f2_flush_ow;
 
     // pipe
 
@@ -353,6 +357,8 @@ module core
         .alu1_out_i (alu_1_wb_iw),
         .pc_0_i     (pc_0_wb_iw),
         .pc_1_i     (pc_1_wb_iw),
+        .ctrl_0_i   (ctrl0_wb_iw),
+        .ctrl_1_i   (ctrl1_wb_iw),
         .rd_data0_o (rd_data0_wb_ow),
         .rd_data1_o (rd_data1_wb_ow)
     );

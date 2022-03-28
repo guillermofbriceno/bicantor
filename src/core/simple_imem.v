@@ -5,6 +5,7 @@ module simple_imem
 (
     input               clock_i,
     input               re_i,
+    input               ssr_i,
     input       [09:0]  address_i,
 
     output reg  [63:0]  data_o = 0
@@ -26,7 +27,9 @@ module simple_imem
 
 
     always @ (posedge clock_i) begin
-        if (re_i) begin
+        if (ssr_i) begin
+            data_o <= 0;
+        end else if (re_i) begin
             data_o <= { 
                 instmemory[address0], instmemory[address1], instmemory[address2], instmemory[address3],
                 instmemory[address4], instmemory[address5], instmemory[address6], instmemory[address7] 

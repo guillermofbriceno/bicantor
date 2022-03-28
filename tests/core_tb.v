@@ -1,6 +1,7 @@
 module core_tb ();
     reg         clock = 0;
     wire        imemstall;
+    wire        imem_sr;
     wire [63:0] data;
     wire [9:0]  addr;
 
@@ -8,7 +9,8 @@ module core_tb ();
         .clock_i(clock),
         .data_i(data),
         .addr_o(addr),
-        .imemstall_o(imemstall)
+        .imemstall_o(imemstall),
+        .imem_sr_o(imem_sr)
     );
 
     simple_imem #( .loadfile("build/jupiter_asm.hex") ) 
@@ -16,7 +18,8 @@ module core_tb ();
         .clock_i(clock),
         .re_i(imemstall),
         .address_i(addr),
-        .data_o(data)
+        .data_o(data),
+        .ssr_i(imem_sr)
     );
     
     integer i = 0;

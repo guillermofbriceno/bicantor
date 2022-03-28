@@ -59,6 +59,11 @@
         - "PC_SEL"
         - "RS2_SEL"
 
+    - mux_name: "WB_MUX"
+      signals:
+        - "ALU_SEL"
+        - "PC_P4_SEL"
+
   control_signals:
     - "RS1_ACTIVE"
     - "RS2_ACTIVE"
@@ -80,6 +85,7 @@
         "FUNCT3_SEL":   1
         "ALU_SRC1_MUX": "RS1_SEL"
         "ALU_SRC2_MUX": "I_IMM_SEL"
+        "WB_MUX":       "ALU_SEL"
 
     "ALUR":
       - opcode:         "0110011"
@@ -90,18 +96,21 @@
         "FUNCT7_SEL":   1
         "ALU_SRC1_MUX": "RS1_SEL"
         "ALU_SRC2_MUX": "RS2_SEL"
+        "WB_MUX":       "ALU_SEL"
 
     "LUI":
       - opcode:         "0110111"
         "REGWRITE":     1
         "ALU_SRC1_MUX": "U_IMM_SEL"
         "ALU_SRC2_MUX": "RS2_SEL"
+        "WB_MUX":       "ALU_SEL"
 
     "AUIPC":
       - opcode:         "0010111"
         "REGWRITE":     1
         "ALU_SRC1_MUX": "U_IMM_SEL"
         "ALU_SRC2_MUX": "PC_SEL"
+        "WB_MUX":       "ALU_SEL"
 
     "JAL":
       - opcode:         "1101111"
@@ -109,13 +118,17 @@
         "JAL":          1
         "ISSUE_PRI":    1
         "ISSUE_SLOT":   0
+        "WB_MUX":       "PC_P4_SEL"
 
     "JALR":
       - opcode:         "1100111"
         "REGWRITE":     1
         "JALR":         1
+        "RS1_ACTIVE":   1
+        "ALU_SRC1_MUX": "RS1_SEL"
         "ISSUE_PRI":    1
         "ISSUE_SLOT":   0
+        "WB_MUX":       "PC_P4_SEL"
 
     "BRANCH":
       - opcode:         "1100011"
