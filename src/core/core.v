@@ -35,16 +35,19 @@ module core
         .f2_pred_0_o            (f2_pred_0_iw),
         .pred_f2_1_o            (f2_pred_1_iw),
         .idata_f2_i             (data_i),
-        .pred_f2_1_i            (f2_pred_1_iw),
+        .pred_f2_1_i            (f2_pred_1_ow),
         .f2_stall_i             (f2_stall_ow),
 
         // decode
         .pred_taken_0_dec_o     (pred_taken_0_dec_iw),
         .pred_taken_1_dec_o     (pred_taken_1_dec_iw),
+        .pc_dec0_o              (pc_dec_0_iw),
+        .pc_dec1_o              (pc_dec_1_iw),
         .inst0_dec_i            (inst0_dec_ow),
         .inst1_dec_i            (inst1_dec_ow),
         .ctrl0_dec_i            (ctrl0_dec_ow),
         .ctrl1_dec_i            (ctrl1_dec_ow),
+        .dec_flush_i            (f2_flush_ow),
         .dec_stall_i            (dec_stall_ow),
 
         // issue
@@ -119,6 +122,8 @@ module core
         .update_btb_i           (update_btb_exec_ow),
         .wrong_pred_i           (wrong_pred_exec_ow),
         .fixed_pc_i             (fixed_pc_ow),
+        .wasnt_branch_i         (wasnt_branch_ow),
+        .wasnt_br_pc_i          (fixed_pc_dec_ow),
 
         .pred_0_o               (f1_pred_0_ow),
         .pred_1_o               (f1_pred_1_ow),
@@ -146,7 +151,7 @@ module core
         .idata_i                (data_i),
         .branch_mispred_i       (wrong_pred_exec_ow),
         .wasnt_branch_i         (wasnt_branch_ow),
-        .zero_1_i               (f2_pred_0_iw),
+        .zero_1_i               (pred_taken_0_dec_iw),
         .pred_1_i               (f2_pred_1_iw),
 
         .inst0_o                (f2_inst0_ow),
@@ -165,20 +170,23 @@ module core
     // inst-ins not pipelined because imemory is read synchronous
     wire        pred_taken_0_dec_iw;
     wire        pred_taken_1_dec_iw;
-
+    wire [31:0] pc_dec_0_iw;
+    wire [31:0] pc_dec_1_iw;
 
     decode DECODE(
         .inst0_i                (f2_inst0_ow),
         .inst1_i                (f2_inst1_ow),
         .pred_taken_0_i         (pred_taken_0_dec_iw),
         .pred_taken_1_i         (pred_taken_1_dec_iw),
+        .pc_0_i                 (pc_dec_0_iw),
+        .pc_1_i                 (pc_dec_1_iw),
 
         .inst0_o                (inst0_dec_ow),
         .inst1_o                (inst1_dec_ow),
         .ctrl0_o                (ctrl0_dec_ow),
         .ctrl1_o                (ctrl1_dec_ow),
-
         .wasnt_branch_o         (wasnt_branch_ow),
+        .fixed_pc_o             (fixed_pc_dec_ow),
 
         .stall_o                (dec_stall_ow)
     );
@@ -189,6 +197,7 @@ module core
     wire [`CTRL_BUS] ctrl1_dec_ow;
     wire             dec_stall_ow;
     wire             wasnt_branch_ow;
+    wire [31:0]      fixed_pc_dec_ow;
 
     // pipe
     

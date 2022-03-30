@@ -16,18 +16,21 @@ module pipeline
     // f2 or imem
     output wire [09:0] iaddr_f2_o,
     output wire        f2_pred_0_o,
-    output reg         pred_f2_1_o,
+    output reg         pred_f2_1_o = 0,
     input  wire [63:0] idata_f2_i,
     input  wire        f2_stall_i,
-    output wire        pred_f2_1_i,
+    input  wire        pred_f2_1_i,
 
     // decode
     output wire        pred_taken_0_dec_o,
     output wire        pred_taken_1_dec_o,
+    output reg  [31:0] pc_dec0_o = 0,
+    output reg  [31:0] pc_dec1_o = 0,
     input  wire [31:0] inst0_dec_i,
     input  wire [31:0] inst1_dec_i,
     input  wire [`CTRL_BUS] ctrl0_dec_i,
     input  wire [`CTRL_BUS] ctrl1_dec_i,
+    input  wire        dec_flush_i,
     input  wire        dec_stall_i,
 
     // issue
@@ -133,8 +136,8 @@ module pipeline
     */
     reg         dec0_sr = 0;
     reg         dec1_sr = 0;
-    reg [31:0]  pc_dec0 = 0;
-    reg [31:0]  pc_dec1 = 0;
+    //reg [31:0]  pc_dec0 = 0;
+    //reg [31:0]  pc_dec1 = 0;
 
     reg         pred_dec_0 = 0;
     reg         pred_dec_1 = 0;
@@ -143,21 +146,19 @@ module pipeline
 
     always @(posedge clock_i) begin
         // Fetch Slot 0
-        if (0) begin
-        //if (zero_0_data_f2_i) begin
-        //    pred_dec_0          <= 0;
+        if (dec_flush_i && frontend_we_w) begin
+            pred_dec_0          <= 0;
         end else if (frontend_we_w) begin
-            pc_dec0             <= pc_f2_r;
+            pc_dec0_o           <= pc_f2_r;
             pred_dec_0          <= pred_f2_0;
             pred_tgt_dec_0      <= pred_tgt_f2_0;
         end
 
         // Fetch Slot 1
-        if (0) begin
-        //if (zero_0_data_f2_i) begin
-        //    pred_dec_1          <= 0;
+        if (dec_flush_i && frontend_we_w) begin
+            pred_dec_1          <= 0;
         end else if (frontend_we_w) begin
-            pc_dec1             <= pc_f2_r + 4;
+            pc_dec1_o           <= pc_f2_r + 4;
             pred_dec_1          <= pred_f2_1_i;
             pred_tgt_dec_1      <= pred_tgt_f2_1;
         end
@@ -169,31 +170,36 @@ module pipeline
     /*
     *  Decode / Issue Buffers
     */
+    wire issue_0_sr = issue1_stall_w || exec_wrong_branch_i;
+    wire issue_1_sr = issue0_stall_w || exec_wrong_branch_i;
+    wire issue_0_we = backend_we_w && !issue0_stall_w;
+    wire issue_1_we = backend_we_w && !issue1_stall_w;
+
     always @(posedge clock_i) begin
         // Issue 0
-        if (issue1_stall_w || exec_wrong_branch_i) begin
+        if (issue_0_sr) begin
             inst0_issue_o      <= 0;
             ctrl0_issue_o      <= 0;
             pred_0_issue_o     <= 0;
             pred_tgt_0_issue_o <= 0;
-        end else if (backend_we_w && !issue0_stall_w) begin
+        end else if (issue_0_we) begin
             inst0_issue_o      <= inst0_dec_i;
             ctrl0_issue_o      <= ctrl0_dec_i;
-            pc_0_issue_o       <= pc_dec0;
+            pc_0_issue_o       <= pc_dec0_o;
             pred_0_issue_o     <= pred_dec_0;
             pred_tgt_0_issue_o <= pred_tgt_dec_0;
         end
 
         // Issue 1
-        if (issue0_stall_w || exec_wrong_branch_i) begin
+        if (issue_1_sr) begin
             inst1_issue_o      <= 0;
             ctrl1_issue_o      <= 0;
             pred_1_issue_o     <= 0;
             pred_tgt_1_issue_o <= 0;
-        end else if (backend_we_w && !issue1_stall_w) begin
+        end else if (issue_1_we) begin
             inst1_issue_o      <= inst1_dec_i;
             ctrl1_issue_o      <= ctrl1_dec_i;
-            pc_1_issue_o       <= pc_dec1;
+            pc_1_issue_o       <= pc_dec1_o;
             pred_1_issue_o     <= pred_dec_1;
             pred_tgt_1_issue_o <= pred_tgt_dec_1;
         end

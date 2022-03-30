@@ -13,6 +13,9 @@ module fetch1
     input  wire         wrong_pred_i,
     input  wire [31:0]  fixed_pc_i,
 
+    input  wire         wasnt_branch_i,
+    input  wire [31:0]  wasnt_br_pc_i,
+
     output wire         pred_0_o,
     output wire         pred_1_o,
     output      [31:0]  pred_tgt_0_o,
@@ -32,9 +35,14 @@ module fetch1
     wire            btb_hit_1;
     wire            pht_pred_0;
     wire            pht_pred_1;
+    wire  [31:0]    update_pc;
+    wire            update_pht;
+    wire            do_fix_wasnt_branch;
 
     assign pred_0_o = btb_hit_0 && pht_pred_0;
     assign pred_1_o = btb_hit_1 && pht_pred_1;
+    assign update_pc = ( !wasnt_branch_i && wrong_pred_i ) ? update_pc_i : wasnt_br_pc_i;
+    assign do_fix_wasnt_branch = wasnt_branch_i && !wrong_pred_i;
 
     assign pc_o = pc;
 
@@ -44,21 +52,33 @@ module fetch1
     end
 
     always @(*) begin
-        case({pred_0_o, pred_1_o, wrong_pred_i})
-            3'b000:  pc_mux_out <= pc + 8;
-            3'b010:  pc_mux_out <= pred_tgt_1_o;
-            3'b100:  pc_mux_out <= pred_tgt_0_o;
-            3'b110:  pc_mux_out <= pred_tgt_0_o;
-            3'b001:  pc_mux_out <= fixed_pc_i;
-            3'b011:  pc_mux_out <= fixed_pc_i;
-            3'b111:  pc_mux_out <= fixed_pc_i;
-            3'b101:  pc_mux_out <= fixed_pc_i;
+        case({pred_0_o, pred_1_o, wrong_pred_i, wasnt_branch_i})
+            4'b0000: pc_mux_out <= pc + 8;
+
+            4'b0100: pc_mux_out <= pred_tgt_1_o;
+            4'b1000: pc_mux_out <= pred_tgt_0_o;
+            4'b1100: pc_mux_out <= pred_tgt_0_o;
+
+            4'b0010: pc_mux_out <= fixed_pc_i;
+            4'b0110: pc_mux_out <= fixed_pc_i;
+            4'b1010: pc_mux_out <= fixed_pc_i;
+            4'b1110: pc_mux_out <= fixed_pc_i;
+
+            4'b0001: pc_mux_out <= wasnt_br_pc_i + 4;
+            4'b0011: pc_mux_out <= fixed_pc_i;
+            4'b0101: pc_mux_out <= wasnt_br_pc_i + 4;
+            4'b0111: pc_mux_out <= fixed_pc_i;
+            4'b1001: pc_mux_out <= wasnt_br_pc_i + 4;
+            4'b1011: pc_mux_out <= fixed_pc_i;
+            4'b1101: pc_mux_out <= wasnt_br_pc_i + 4;
+            4'b1111: pc_mux_out <= fixed_pc_i;
             default: pc_mux_out <= 32'bX;
         endcase
     end
 
     branch_target_buffer BTB(
         .clock_i            (clock_i),
+        .we_i               (pc_we_i),
         .pc_i               (pc_mux_out),
         .update_pc_i        (update_pc_i),
         .update_target_i    (update_tgt_i),
@@ -71,10 +91,12 @@ module fetch1
 
     pattern_history_table PHT(
         .clock_i            (clock_i),
+        .we_i               (pc_we_i),
         .pc_i               (pc_mux_out),
-        .update_pc_i        (update_pc_i),
-        .update_i           (update_pht_i),
+        .update_pc_i        (update_pc),
+        .update_i           (update_pht_i || do_fix_wasnt_branch),
         .last_br_i          (last_br_i),
+        .wasnt_branch_i     (do_fix_wasnt_branch),
         .pred_0_o           (pht_pred_0),
         .pred_1_o           (pht_pred_1)
     );
@@ -87,10 +109,12 @@ module pattern_history_table
 )
 (
     input  wire         clock_i,
+    input  wire         we_i,
     input  wire [31:0]  pc_i,
     input  wire [31:0]  update_pc_i,
     input  wire         update_i,
     input  wire         last_br_i,
+    input  wire         wasnt_branch_i,
 
     output wire         pred_0_o,
     output wire         pred_1_o
@@ -105,32 +129,40 @@ module pattern_history_table
 
     reg  [31:0] pc_internal = 0;
 
-    wire  [ABITS-1:0] xored_address;
+    wire [ABITS-1:0] xored_address;
     wire [ABITS-1:0] wr_xored_address;
+    wire             last_br;
 
-    //assign xored_address    = pc_internal[`TAG_RANGE(ABITS)] ^ ghr;
-    //assign wr_xored_address = update_pc_i[`TAG_RANGE(ABITS)] ^ ghr;
+    //assign xored_address    = pc_internal[`IDX_RANGE(ABITS)] ^ ghr;
+    //assign wr_xored_address = update_pc_i[`IDX_RANGE(ABITS)] ^ ghr;
     assign xored_address    = pc_internal[`IDX_RANGE(ABITS)];
     assign wr_xored_address = update_pc_i[`IDX_RANGE(ABITS)];
 
     assign pred_0_o = pht[xored_address  ] > 1;
     assign pred_1_o = pht[xored_address+1] > 1;
 
+    assign last_br = wasnt_branch_i ? 0 : last_br_i;
+
     integer i;
     initial begin
         for (i = 0; i < 2**ABITS; i = i + 1) begin
             pht[i]     <= 0;
         end
+        // for testing
+        pht[4]     <= 3;
     end
 
     always @(posedge clock_i) begin
         pc_internal <= pc_i;
-        if (update_i) begin
-            ghr <= {ghr[ABITS-1:0], last_br_i};
-            if      (  last_br_i && ( (pht[wr_xored_address] + 1) <= 2 ) )
+        if (update_i && we_i) begin
+            if      (  last_br && ( (pht[wr_xored_address] + 1) <= 2 ) )
                 pht[wr_xored_address] <= pht[wr_xored_address] + 1;
-            else if ( !last_br_i && ( (pht[wr_xored_address] - 1) >= 0 ) )
+            else if ( !last_br && ( (pht[wr_xored_address] - 1) >= 0 ) )
                 pht[wr_xored_address] <= pht[wr_xored_address] - 1;
+        end
+
+        if (update_i && !wasnt_branch_i) begin
+            ghr <= {ghr[ABITS-1:0], last_br_i};
         end
     end
 
@@ -147,6 +179,7 @@ module branch_target_buffer
 )
 (
     input  wire         clock_i,
+    input  wire         we_i,
 
     input  wire [31:0]  pc_i,
     input  wire [31:0]  update_pc_i,
@@ -186,12 +219,15 @@ module branch_target_buffer
             tags[i]     <= 0;
             targets[i]  <= 0;
         end
+        // for testing
+        tags[4]     <= 0;
+        targets[4]  <= 100;
     end
 
     always @(posedge clock_i) begin
         pc_internal <= pc_i;
 
-        if (update_i) begin
+        if (update_i && we_i) begin
             tags[update_pc_i[`IDX_RANGE(ABITS)]]      <= update_pc_i[`TAG_RANGE(ABITS)];
             targets[update_pc_i[`IDX_RANGE(ABITS)]]   <= update_target_i;
         end

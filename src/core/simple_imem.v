@@ -27,7 +27,7 @@ module simple_imem
 
 
     always @ (posedge clock_i) begin
-        if (ssr_i) begin
+        if (ssr_i && re_i) begin
             data_o <= 0;
         end else if (re_i) begin
             data_o <= { 
