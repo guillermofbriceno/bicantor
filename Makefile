@@ -25,7 +25,7 @@ DEFVERI = ./src/defs.v
 $(TESTBENCH_VVP): $(SRCS) $(TB) $(DEFVERI) $(JUPITER_HEX).hex
 	mkdir -p build/
 	iverilog -o $@ $(TESTBENCH_CORE) -y $(SRCS) -I $(DEFVERI)
-	vvp $@ +TEST=$(JUPITER_HEX)
+	vvp $@ +TEST=$(JUPITER_HEX) +CYCLES=22
 
 $(JUPITER_HEX): $(JUPITER_ASM)
 	steam-run jupiter $^ --dump-code $(JUPITER_MCH)

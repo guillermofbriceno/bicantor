@@ -5,15 +5,16 @@ BUILDDIR = "./build"
 UTILDIR = "./util"
 
 testnames = [ "branch", "bypass"]
+testcycles= [       22,     10 ]
 
 results = []
     
 def main():
-    for test in testnames:
+    for test, cycles in zip(testnames, testcycles):
         print(f"Test {test}: ", end="")
         oracleregs = []
         testregs = []
-        os.system(f"vvp {BUILDDIR}/uut.vvp +TEST={BUILDDIR}/{test} > /dev/null")
+        os.system(f"vvp {BUILDDIR}/uut.vvp +TEST={BUILDDIR}/{test} +CYCLES={cycles} > /dev/null")
 
         with open (f"{BUILDDIR}/finalregs") as f: oracleregs = [l for l in f]
         with open (f"{TESTDIR}/{test}.regs") as f: testregs = [l for l in f]

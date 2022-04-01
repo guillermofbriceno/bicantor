@@ -23,8 +23,12 @@ module core_tb ();
     );
     
     integer i = 0;
+    integer numcycles = 0;
     integer finalphtf, finalregsf;
     initial begin
+        if ($value$plusargs("CYCLES=%d", numcycles))
+            $display("Running for %d cycles", numcycles);
+
         $dumpfile("./build/uut.vcd");
         $dumpvars(0, core_tb);
         $dumpvars(0, CORE.DECODE);
@@ -33,7 +37,7 @@ module core_tb ();
         end
 
 
-        for (i=0; i < 100; i=i+1) begin
+        for (i=0; i < numcycles; i=i+1) begin
                 #0.5;
                 clock = 1;
                 #0.5;
