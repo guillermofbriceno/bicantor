@@ -1,19 +1,21 @@
-{ pkgs ? import <nixpkgs> {} }:
+{ pkgs ? (import <nixpkgs> {}).pkgsCross.riscv32-embedded }:
 let
-  python-with-my-packages = pkgs.python3.withPackages (p: with p; [
+  python-with-my-packages = pkgs.buildPackages.python3.withPackages (p: with p; [
     pyyaml
   ]);
+
 in
 pkgs.mkShell {
+
   nativeBuildInputs = [ 
     python-with-my-packages 
-    pkgs.openjdk
+    pkgs.buildPackages.openjdk
 
-    pkgs.gtkwave
-    pkgs.yosys 
-    pkgs.trellis 
-    pkgs.verilog
-    pkgs.ctags
+    pkgs.buildPackages.gtkwave
+    pkgs.buildPackages.yosys 
+    pkgs.buildPackages.trellis 
+    pkgs.buildPackages.verilog
+    pkgs.buildPackages.ctags
 
   ];
 

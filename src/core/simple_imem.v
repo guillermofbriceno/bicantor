@@ -37,9 +37,10 @@ module simple_imem
         end
     end
 
+    reg [100*8:0] test_name;
     initial begin
-        $readmemh(loadfile, instmemory);
+        if ($value$plusargs("TEST=%s", test_name))
+            $readmemh({test_name, ".hex"}, instmemory);
     end
 
 endmodule
-

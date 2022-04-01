@@ -149,7 +149,7 @@ module pattern_history_table
             pht[i]     <= 0;
         end
         // for testing
-        pht[4]     <= 3;
+        //pht[4]     <= 3;
     end
 
     always @(posedge clock_i) begin
@@ -219,9 +219,9 @@ module branch_target_buffer
             tags[i]     <= 0;
             targets[i]  <= 0;
         end
-        // for testing
-        tags[4]     <= 0;
-        targets[4]  <= 100;
+        // for tesing
+        //tags[4]     <= 0;
+        //targets[4]  <= 100;
     end
 
     always @(posedge clock_i) begin

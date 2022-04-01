@@ -23,6 +23,7 @@ module core_tb ();
     );
     
     integer i = 0;
+    integer finalphtf, finalregsf;
     initial begin
         $dumpfile("./build/uut.vcd");
         $dumpvars(0, core_tb);
@@ -31,16 +32,31 @@ module core_tb ();
             $dumpvars(0, CORE.ISSUE.REGFILE.registers[i]);
         end
 
-        //for(i=0; i < 1024; i=i+1) begin
-        //    $dumpvars(0, CORE.FETCH1.PHT.pht[i]);
-        //end
 
-        for (i=0; i < 5000; i=i+1) begin
+        for (i=0; i < 100; i=i+1) begin
                 #0.5;
                 clock = 1;
                 #0.5;
                 clock = 0;
         end
+
+        finalphtf = $fopen("./build/finalpht");
+        for(i=0; i < 1024; i = i + 1) begin
+            $fdisplay(finalphtf, CORE.FETCH1.PHT.pht[i]);
+        end
+        $fclose(finalphtf);
+
+        finalphtf = $fopen("./build/finalbtb");
+        for(i=0; i < 1024; i = i + 1) begin
+            $fdisplay(finalphtf, "%x %x", CORE.FETCH1.BTB.tags[i], CORE.FETCH1.BTB.targets[i]);
+        end
+        $fclose(finalphtf);
+
+        finalregsf = $fopen("./build/finalregs");
+        for (i = 0; i < 32; i = i + 1) begin
+            $fdisplay(finalregsf, "%d", CORE.ISSUE.REGFILE.registers[i]);
+        end
+        $fclose(finalregsf);
 
     end
 endmodule
