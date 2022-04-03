@@ -31,6 +31,7 @@ module pipeline
     input  wire [`CTRL_BUS] ctrl0_dec_i,
     input  wire [`CTRL_BUS] ctrl1_dec_i,
     input  wire        dec_flush_i,
+    input  wire        pred_taken_1_dec_i,
     input  wire        dec_stall_i,
 
     // issue
@@ -159,7 +160,8 @@ module pipeline
             pred_dec_1          <= 0;
         end else if (frontend_we_w) begin
             pc_dec1_o           <= pc_f2_r + 4;
-            pred_dec_1          <= pred_f2_1_i;
+            //pred_dec_1          <= pred_f2_1_i;
+            pred_dec_1          <= pred_f2_1_o;
             pred_tgt_dec_1      <= pred_tgt_f2_1;
         end
     end
@@ -200,7 +202,8 @@ module pipeline
             inst1_issue_o      <= inst1_dec_i;
             ctrl1_issue_o      <= ctrl1_dec_i;
             pc_1_issue_o       <= pc_dec1_o;
-            pred_1_issue_o     <= pred_dec_1;
+            //pred_1_issue_o     <= pred_dec_1;
+            pred_1_issue_o     <= pred_taken_1_dec_i;
             pred_tgt_1_issue_o <= pred_tgt_dec_1;
         end
     end
@@ -239,22 +242,29 @@ module pipeline
     */
     reg [31:0] pc_0_lsu;
     reg [31:0] pc_1_lsu;
+    wire       lsu_1_sr = exec_wrong_branch_i && (pc_0_exec_o < pc_1_exec_o);
 
     always @(posedge clock_i) begin
         // Exec 0
         if (0) begin
         end else if (backend_we_w) begin
-            alu_0_lsu_o <= alu_0_exec_i;
             ctrl0_lsu_o <= ctrl0_exec_o;
+            alu_0_lsu_o <= alu_0_exec_i;
             rd_addr_0_lsu_o <= inst0_exec_o[`RD_ENC];
             pc_0_lsu <= pc_0_exec_o;
         end
 
         // Exec 1
-        if (0) begin
+        if (lsu_1_sr && backend_we_w) begin
+            ctrl1_lsu_o     <= 0;
+`ifdef SIM_TEST
+            alu_1_lsu_o     <= 0;
+            rd_addr_1_lsu_o <= 0;
+            pc_1_lsu        <= 0;
+`endif
         end else if (backend_we_w) begin
-            alu_1_lsu_o <= alu_1_exec_i;
             ctrl1_lsu_o <= ctrl1_exec_o;
+            alu_1_lsu_o <= alu_1_exec_i;
             rd_addr_1_lsu_o <= inst1_exec_o[`RD_ENC];
             pc_1_lsu <= pc_1_exec_o;
         end

@@ -49,6 +49,7 @@ module core
         .ctrl1_dec_i            (ctrl1_dec_ow),
         .dec_flush_i            (f2_flush_ow),
         .dec_stall_i            (dec_stall_ow),
+        .pred_taken_1_dec_i     (pred_taken_1_dec_ow),
 
         // issue
         .inst0_issue_o          (inst0_issue_iw),
@@ -152,6 +153,7 @@ module core
         .branch_mispred_i       (wrong_pred_exec_ow),
         .wasnt_branch_i         (wasnt_branch_ow),
         .zero_1_i               (pred_taken_0_dec_iw),
+        //.zero_1_i               (f2_pred_0_iw || pred_taken_0_dec_iw),
         .pred_1_i               (f2_pred_1_iw),
 
         .inst0_o                (f2_inst0_ow),
@@ -187,7 +189,7 @@ module core
         .ctrl1_o                (ctrl1_dec_ow),
         .wasnt_branch_o         (wasnt_branch_ow),
         .fixed_pc_o             (fixed_pc_dec_ow),
-
+        .pred_taken_1_o         (pred_taken_1_dec_ow),
         .stall_o                (dec_stall_ow)
     );
 
@@ -198,6 +200,7 @@ module core
     wire             dec_stall_ow;
     wire             wasnt_branch_ow;
     wire [31:0]      fixed_pc_dec_ow;
+    wire             pred_taken_1_dec_ow;
 
     // pipe
     

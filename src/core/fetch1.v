@@ -41,7 +41,8 @@ module fetch1
 
     assign pred_0_o = btb_hit_0 && pht_pred_0;
     assign pred_1_o = btb_hit_1 && pht_pred_1;
-    assign update_pc = ( !wasnt_branch_i && wrong_pred_i ) ? update_pc_i : wasnt_br_pc_i;
+    //assign update_pc = ( !wasnt_branch_i && wrong_pred_i ) ? update_pc_i : wasnt_br_pc_i;
+    assign update_pc = wasnt_branch_i ? wasnt_br_pc_i : update_pc_i;
     assign do_fix_wasnt_branch = wasnt_branch_i && !wrong_pred_i;
 
     assign pc_o = pc;
@@ -153,15 +154,17 @@ module pattern_history_table
     end
 
     always @(posedge clock_i) begin
-        pc_internal <= pc_i;
+        if (we_i)
+            pc_internal <= pc_i;
+
         if (update_i && we_i) begin
-            if      (  last_br && ( (pht[wr_xored_address] + 1) <= 2 ) )
+            if      (  last_br && ( $signed( (pht[wr_xored_address] + 1) ) <= 2 ) )
                 pht[wr_xored_address] <= pht[wr_xored_address] + 1;
-            else if ( !last_br && ( (pht[wr_xored_address] - 1) >= 0 ) )
+            else if ( !last_br && ( $signed( (pht[wr_xored_address] - 1) ) >= 0 ) )
                 pht[wr_xored_address] <= pht[wr_xored_address] - 1;
         end
 
-        if (update_i && !wasnt_branch_i) begin
+        if (update_i && !wasnt_branch_i && we_i) begin
             ghr <= {ghr[ABITS-1:0], last_br_i};
         end
     end
@@ -225,7 +228,8 @@ module branch_target_buffer
     end
 
     always @(posedge clock_i) begin
-        pc_internal <= pc_i;
+        if (we_i)
+            pc_internal <= pc_i;
 
         if (update_i && we_i) begin
             tags[update_pc_i[`IDX_RANGE(ABITS)]]      <= update_pc_i[`TAG_RANGE(ABITS)];

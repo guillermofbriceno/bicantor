@@ -22,10 +22,9 @@ DEFVERI = ./src/defs.v
 
 .PHONY: clean
 
-$(TESTBENCH_VVP): $(SRCS) $(TB) $(DEFVERI) $(JUPITER_HEX).hex
+$(TESTBENCH_VVP): $(SRCS) $(TB) $(DEFVERI)
 	mkdir -p build/
-	iverilog -o $@ $(TESTBENCH_CORE) -y $(SRCS) -I $(DEFVERI)
-	vvp $@ +TEST=$(JUPITER_HEX) +CYCLES=22
+	iverilog -o $@ $(TESTBENCH_CORE) -y $(SRCS) -I $(DEFVERI) -DSIM_TEST
 
 $(JUPITER_HEX): $(JUPITER_ASM)
 	steam-run jupiter $^ --dump-code $(JUPITER_MCH)
@@ -40,12 +39,14 @@ $(BUILD)/%.hex: ./tests/quicktests/%.s
 
 defs: $(DEFVERI)
 
-quicktests:
+asm: $(TESTBENCH_VVP) $(JUPITER_HEX).hex
+	vvp $(TESTBENCH_VVP) +TEST=$(JUPITER_HEX) +CYCLES=100
+
+quicktests: $(QUICKTESTS_HEX)
 	python3 $(UTIL)/quicktester/quicktester.py
 
-test: $(QUICKTESTS_HEX) quicktests $(TESTBENCH_VVP)
+test: $(TESTBENCH_VVP) quicktests asm
 
-asm: $(JUPITER_HEX)
 
 clean:
 	rm -r $(BUILD)

@@ -24,10 +24,10 @@ module fetch2
 
         if (zero_1_i) begin
             inst1_o  <= 0;
-            pred_1_o <= 0;
+            //pred_1_o <= 0;
         end else begin
             inst1_o  <= idata_i[31:0];
-            pred_1_o <= pred_1_i;
+            //pred_1_o <= pred_1_i;
         end
     end
 

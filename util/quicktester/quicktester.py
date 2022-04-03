@@ -4,14 +4,26 @@ TESTDIR = "./tests/quicktests"
 BUILDDIR = "./build"
 UTILDIR = "./util"
 
-testnames = [ "branch", "bypass"]
-testcycles= [       22,     10 ]
+testnames = [ 
+        "bypass",
+        "br-simple-conditional",
+        "br-prediction-torture"
+]
+
+testcycles= [
+        10,
+        22, # 22
+        125
+]
 
 results = []
     
 def main():
+    print("\n----------------------------------------")
+    print("Running Quicktests\n")
+    print("Test" + " "*27 + "Status")
     for test, cycles in zip(testnames, testcycles):
-        print(f"Test {test}: ", end="")
+        print(f"{test:<30} ", end="")
         oracleregs = []
         testregs = []
         os.system(f"vvp {BUILDDIR}/uut.vvp +TEST={BUILDDIR}/{test} +CYCLES={cycles} > /dev/null")
@@ -23,13 +35,15 @@ def main():
         if oracleregs == testregs:
             print("PASS")
         else:
-            print("FAIL")
+            print("*FAIL*")
 
     print("\nQuicktests ", end="")
     if any(results):
-        print("FAILED\n")
+        print("*FAILED*")
     else:
-        print("PASSED\n")
+        print("PASSED")
+
+    print("----------------------------------------\n")
 
 main()
 

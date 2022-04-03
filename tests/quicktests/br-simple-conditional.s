@@ -7,3 +7,4 @@ __start:
 loop:
         addi     t1, t1, 0x1
         blt      t1, t0,loop
+
