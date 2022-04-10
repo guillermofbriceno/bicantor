@@ -9,6 +9,7 @@
 `define S_IMM_ENC(in) {{22{in[31]}}, in[31:25], in[11:7]}
 `define B_IMM_ENC(in) {{20{in[31]}}, in[7], in[30:25], in[11:8], 1'b0}
 `define J_IMM_ENC(in) {{12{in[31]}}, in[19:12], in[20], in[30:25], in[24:21], 1'b0}
+`define CHAN(l,n) ( (l * (n+1)) - 1 ) : ( l * n )
 `define TAG_RANGE(abits) 31:(31 - (29 - abits))
 `define IDX_RANGE(abits) (31 - (29 - abits) - 1):2
 `define BEQ 3'b000
@@ -17,6 +18,7 @@
 `define BGE 3'b101
 `define BLTU 3'b110
 `define BGEU 3'b111
+`define RVFI_BUS 31:0
 
 `define TEMP2 0
 `define TEMP3 1
@@ -26,6 +28,16 @@
 `define PC_MUX_P8 0
 `define TEMP5 1
 `define TEMP6 2
+
+`define RVFI_ORDER 63:0
+`define RVFI_INSN 95:64
+`define RVFI_PC_RDATA 127:96
+`define RVFI_PC_WDATA 159:128
+`define RVFI_RS1_ADDR 164:160
+`define RVFI_RS2_ADDR 169:165
+`define RVFI_RS1_DATA 201:170
+`define RVFI_RS2_DATA 233:202
+`define RVFI_BUS 233:0
 
 `define BYPASS_MUX 3:0
 `define BYPASS_NONE 0
@@ -55,19 +67,22 @@
 `define FUNCT3_SEL 11
 `define JAL 12
 `define JALR 13
+`define INVALID 15
 `define ALUI_OP 7'b0010011
-`define ALUI_CTRL 15'b000100001010001
+`define ALUI_CTRL 16'b0000100001010001
 `define ALUR_OP 7'b0110011
-`define ALUR_CTRL 15'b000110001110111
+`define ALUR_CTRL 16'b0000110001110111
 `define LUI_OP 7'b0110111
-`define LUI_CTRL 15'b000000001000110
+`define LUI_CTRL 16'b0000000001000110
 `define AUIPC_OP 7'b0010111
-`define AUIPC_CTRL 15'b000000001000100
+`define AUIPC_CTRL 16'b0000000001000100
 `define JAL_OP 7'b1101111
-`define JAL_CTRL 15'b001000101001000
+`define JAL_CTRL 16'b0001000101001000
 `define JALR_OP 7'b1100111
-`define JALR_CTRL 15'b010000101011001
+`define JALR_CTRL 16'b0010000101011001
 `define BRANCH_OP 7'b1100011
-`define BRANCH_CTRL 15'b100100100110111
-`define CTRL_BUS 14:0
+`define BRANCH_CTRL 16'b0100100100110111
+`define INVALID_INST_OP 7'bXXXXXXX
+`define INVALID_INST_CTRL 16'b1000000000000000
+`define CTRL_BUS 15:0
 

@@ -12,6 +12,8 @@
       "B_IMM_ENC(in)" : "{{20{in[31]}}, in[7], in[30:25], in[11:8], 1'b0}"
       "J_IMM_ENC(in)" : "{{12{in[31]}}, in[19:12], in[20], in[30:25], in[24:21], 1'b0}"
 
+      "CHAN(l,n)"     : "( (l * (n+1)) - 1 ) : ( l * n )"
+
       "TAG_RANGE(abits)" : "31:(31 - (29 - abits))"
       "IDX_RANGE(abits)" : "(31 - (29 - abits) - 1):2"
 
@@ -21,6 +23,8 @@
       "BGE":  "3'b101"
       "BLTU": "3'b110"
       "BGEU": "3'b111"
+
+      "RVFI_BUS":   "31:0"
 
 - type: enum
   values:
@@ -34,6 +38,18 @@
     - "PC_MUX_P8"
     - "TEMP5"
     - "TEMP6"
+
+- type: enc_bus
+  bus_name: "RVFI_BUS"
+  values:
+    - "RVFI_ORDER":     64
+      "RVFI_INSN":      32
+      "RVFI_PC_RDATA":  32
+      "RVFI_PC_WDATA":  32
+      "RVFI_RS1_ADDR":  5
+      "RVFI_RS2_ADDR":  5
+      "RVFI_RS1_DATA":  32
+      "RVFI_RS2_DATA":  32
 
 - type: mux
   mux_name: "BYPASS_MUX"
@@ -76,6 +92,7 @@
     - "JAL"
     - "JALR"
     - "COND_BRANCH"
+    - "INVALID"
   
   operation_codes:
     "ALUI":
@@ -140,3 +157,7 @@
         "RS2_ACTIVE":   1
         "ISSUE_PRI":    1
         "ISSUE_SLOT":   0
+
+    "INVALID_INST":
+      - opcode:         "XXXXXXX"
+        "INVALID":      1

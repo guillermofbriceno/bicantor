@@ -50,6 +50,22 @@ def mux(obj):
     defs = define(def_dict)
     return writelist(defs)
 
+def enc_bus(obj):
+    #num_ctrl_bits = math.ceil( math.log2( len(obj["values"]) ) )
+    values = obj["values"][0]
+    def_dict = {}
+    idx = 0
+
+    for value, length in values.items():
+        l_int = int(length)
+        def_dict[value] = f"{idx + l_int - 1}:{idx}"
+        idx += l_int
+
+    def_dict[ obj["bus_name"] ] = f"{idx - 1}:0"
+
+    defs = define(def_dict)
+    return writelist(defs)
+
 def control_bus(top_obj):
     bus_idx = 0
     signals = {}
@@ -139,7 +155,8 @@ types = {
         "plain_def": plain_def,
         "enum": enum,
         "mux": mux,
-        "control_bus": control_bus
+        "control_bus": control_bus,
+        "enc_bus": enc_bus
         }
 
 def load(inpput_filename):

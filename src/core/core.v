@@ -1,4 +1,5 @@
 `include "src/defs.v"
+`include "src/core/riscv-formal.v"
 
 module core
 (
@@ -8,7 +9,65 @@ module core
     output wire [09:0]  addr_o,
     output wire         imemstall_o,
     output wire         imem_sr_o
+
+`ifdef RISCV_FORMAL
+    `CORE_RVFI_IO
+`endif
 );
+`ifdef RISCV_FORMAL
+    wire [`RVFI_BUS] rvfi_issue_0_iw;
+    wire [`RVFI_BUS] rvfi_issue_1_iw;
+    wire [`RVFI_BUS] rvfi_issued_0_ow;
+    wire [`RVFI_BUS] rvfi_issued_1_ow;
+
+    wire [63:0] rvfi_order_0_iw;
+    wire [63:0] rvfi_order_1_iw;
+    wire [63:0] rvfi_issued_order_0_ow;
+    wire [63:0] rvfi_issued_order_1_ow;
+
+    wire [31:0] rvfi_pc_wdata_f1_ow;
+
+    wire [04:0] rvfi_rs1_a_exec_0_ow;
+    wire [04:0] rvfi_rs2_a_exec_0_ow;
+    wire [04:0] rvfi_rs1_a_exec_1_ow;
+    wire [04:0] rvfi_rs2_a_exec_1_ow;
+
+    wire [31:0] rvfi_rs1_d_exec_0_ow;
+    wire [31:0] rvfi_rs2_d_exec_0_ow;
+    wire [31:0] rvfi_rs1_d_exec_1_ow;
+    wire [31:0] rvfi_rs2_d_exec_1_ow;
+
+    wire [`RVFI_BUS] rvfi_wb_0;
+    wire [`RVFI_BUS] rvfi_wb_1;
+    
+
+    // RVFI Driver
+    assign rvfi_valid    [`CHAN(1 ,0)]   = !ctrl0_wb_iw[`INVALID] && !(ctrl0_wb_iw == 0);
+    assign rvfi_order    [`CHAN(64,0)]   = rvfi_wb_0[`RVFI_ORDER];
+    assign rvfi_insn     [`CHAN(32,0)]   = rvfi_wb_0[`RVFI_INSN];
+    assign rvfi_rs1_addr [`CHAN(5 ,0)]   = rvfi_wb_0[`RVFI_RS1_ADDR];
+    assign rvfi_rs2_addr [`CHAN(5 ,0)]   = rvfi_wb_0[`RVFI_RS2_ADDR];
+    assign rvfi_rs1_rdata[`CHAN(32,0)]   = rvfi_wb_0[`RVFI_RS1_DATA];
+    assign rvfi_rs2_rdata[`CHAN(32,0)]   = rvfi_wb_0[`RVFI_RS2_DATA];
+    assign rvfi_rd_addr  [`CHAN(5 ,0)]   = ctrl0_wb_iw[`REGWRITE] ? rd_addr_0_wb_iw : 0;
+    assign rvfi_rd_wdata [`CHAN(32,0)]   = ctrl0_wb_iw[`REGWRITE] ? rd_data0_wb_ow : 0;
+    assign rvfi_pc_rdata [`CHAN(32,0)]   = rvfi_wb_0[`RVFI_PC_RDATA];
+    assign rvfi_pc_wdata [`CHAN(32,0)]   = rvfi_wb_0[`RVFI_PC_WDATA];
+
+    assign rvfi_valid    [`CHAN(1 ,1)]   = !ctrl1_wb_iw[`INVALID] && !(ctrl1_wb_iw == 0);
+    assign rvfi_order    [`CHAN(64,1)]   = rvfi_wb_1[`RVFI_ORDER];
+    assign rvfi_insn     [`CHAN(32,1)]   = rvfi_wb_1[`RVFI_INSN];
+    assign rvfi_rs1_addr [`CHAN(5 ,1)]   = rvfi_wb_1[`RVFI_RS1_ADDR];
+    assign rvfi_rs2_addr [`CHAN(5 ,1)]   = rvfi_wb_1[`RVFI_RS2_ADDR];
+    assign rvfi_rs1_rdata[`CHAN(32,1)]   = rvfi_wb_1[`RVFI_RS1_DATA];
+    assign rvfi_rs2_rdata[`CHAN(32,1)]   = rvfi_wb_1[`RVFI_RS2_DATA];
+    assign rvfi_rd_addr  [`CHAN(5 ,1)]   = ctrl1_wb_iw[`REGWRITE] ? rd_addr_1_wb_iw : 0;
+    assign rvfi_rd_wdata [`CHAN(32,1)]   = ctrl1_wb_iw[`REGWRITE] ? rd_data1_wb_ow  : 0;
+    assign rvfi_pc_rdata [`CHAN(32,1)]   = rvfi_wb_1[`RVFI_PC_RDATA];
+    assign rvfi_pc_wdata [`CHAN(32,1)]   = rvfi_wb_1[`RVFI_PC_WDATA];
+`endif
+
+
     reg exec_stall_ow = 0; //temp
     reg f2_stall_ow   = 0; //temp
     reg mem_stall_ow  = 0; //temp
@@ -43,6 +102,8 @@ module core
         .pred_taken_1_dec_o     (pred_taken_1_dec_iw),
         .pc_dec0_o              (pc_dec_0_iw),
         .pc_dec1_o              (pc_dec_1_iw),
+        .was_fetched_0_dec_o    (was_fetched_0_dec_iw),
+        .was_fetched_1_dec_o    (was_fetched_1_dec_iw),
         .inst0_dec_i            (inst0_dec_ow),
         .inst1_dec_i            (inst1_dec_ow),
         .ctrl0_dec_i            (ctrl0_dec_ow),
@@ -109,6 +170,33 @@ module core
         .pc_1_wb_o              (pc_1_wb_iw),
         .wb_stall_i             (wb_stall_ow)
 
+    `ifdef RISCV_FORMAL
+        ,.rvfi_issue_0_o        (rvfi_issue_0_iw)
+        ,.rvfi_issue_1_o        (rvfi_issue_1_iw)
+        ,.rvfi_issued_0_i       (rvfi_issued_0_ow)
+        ,.rvfi_issued_1_i       (rvfi_issued_1_ow)
+
+        ,.rvfi_order_0_o        (rvfi_order_0_iw)
+        ,.rvfi_order_1_o        (rvfi_order_1_iw)
+        ,.rvfi_issued_order_0_i (rvfi_issued_order_0_ow)
+        ,.rvfi_issued_order_1_i (rvfi_issued_order_1_ow)
+
+        ,.rvfi_pc_wdata_f1_i    (rvfi_pc_wdata_f1_ow)
+
+        ,.rvfi_rs1_a_exec_0_i   (rvfi_rs1_a_exec_0_ow)
+        ,.rvfi_rs2_a_exec_0_i   (rvfi_rs2_a_exec_0_ow)
+        ,.rvfi_rs1_a_exec_1_i   (rvfi_rs1_a_exec_1_ow)
+        ,.rvfi_rs2_a_exec_1_i   (rvfi_rs2_a_exec_1_ow)
+
+        ,.rvfi_rs1_d_exec_0_i   (rvfi_rs1_d_exec_0_ow)
+        ,.rvfi_rs2_d_exec_0_i   (rvfi_rs2_d_exec_0_ow)
+        ,.rvfi_rs1_d_exec_1_i   (rvfi_rs1_d_exec_1_ow)
+        ,.rvfi_rs2_d_exec_1_i   (rvfi_rs2_d_exec_1_ow)
+
+        ,.rvfi_wb_0_o           (rvfi_wb_0)
+        ,.rvfi_wb_1_o           (rvfi_wb_1)
+    `endif
+
     );
 
 
@@ -132,6 +220,9 @@ module core
         .pred_tgt_1_o           (f1_pred_tgt_1_ow),
         .pc_o                   (f1_pc_ow),
         .stall_o                (f1_stall_ow)
+`ifdef RISCV_FORMAL
+       ,.rvfi_pc_wdata_o        (rvfi_pc_wdata_f1_ow)
+`endif
     );
 
     wire [31:0] f1_pc_ow;
@@ -174,14 +265,20 @@ module core
     wire        pred_taken_1_dec_iw;
     wire [31:0] pc_dec_0_iw;
     wire [31:0] pc_dec_1_iw;
+    wire        was_fetched_0_dec_iw;
+    wire        was_fetched_1_dec_iw;
 
     decode DECODE(
+        .clock_i                (clock_i),
+        .we_i                   (frontend_we),
         .inst0_i                (f2_inst0_ow),
         .inst1_i                (f2_inst1_ow),
         .pred_taken_0_i         (pred_taken_0_dec_iw),
         .pred_taken_1_i         (pred_taken_1_dec_iw),
         .pc_0_i                 (pc_dec_0_iw),
         .pc_1_i                 (pc_dec_1_iw),
+        .was_fetched_0_i        (was_fetched_0_dec_iw),
+        .was_fetched_1_i        (was_fetched_1_dec_iw),
 
         .inst0_o                (inst0_dec_ow),
         .inst1_o                (inst1_dec_ow),
@@ -256,6 +353,17 @@ module core
         .issued_pred_tgt_1_o    (issued_pred_tgt_1_ow),
         .issued_pc_0_o          (issued_pc_0_ow),
         .issued_pc_1_o          (issued_pc_1_ow)
+    `ifdef RISCV_FORMAL
+       ,.rvfi_0_i               (rvfi_issue_0_iw)
+       ,.rvfi_1_i               (rvfi_issue_1_iw)
+       ,.rvfi_issued_0_o        (rvfi_issued_0_ow)
+       ,.rvfi_issued_1_o        (rvfi_issued_1_ow)
+
+       ,.rvfi_order_0_i         (rvfi_order_0_iw)
+       ,.rvfi_order_1_i         (rvfi_order_1_iw)
+       ,.rvfi_issued_order_0_o  (rvfi_issued_order_0_ow)
+       ,.rvfi_issued_order_1_o  (rvfi_issued_order_1_ow)
+    `endif
     );
 
     wire                issue0_special_stall_ow;
@@ -326,6 +434,18 @@ module core
         .corr_taken_o           (corr_taken_exec_ow),
         .wrong_pred_o           (wrong_pred_exec_ow),
         .fixed_pc_o             (fixed_pc_ow)
+
+    `ifdef RISCV_FORMAL
+        ,.rvfi_rs1_addr_0_o     (rvfi_rs1_a_exec_0_ow)
+        ,.rvfi_rs2_addr_0_o     (rvfi_rs2_a_exec_0_ow)
+        ,.rvfi_rs1_addr_1_o     (rvfi_rs1_a_exec_1_ow)
+        ,.rvfi_rs2_addr_1_o     (rvfi_rs2_a_exec_1_ow)
+        
+        ,.rvfi_rs1_data_0_o     (rvfi_rs1_d_exec_0_ow)
+        ,.rvfi_rs2_data_0_o     (rvfi_rs2_d_exec_0_ow)
+        ,.rvfi_rs1_data_1_o     (rvfi_rs1_d_exec_1_ow)
+        ,.rvfi_rs2_data_1_o     (rvfi_rs2_d_exec_1_ow)
+    `endif
     );
 
     wire [31:0]         alu0_exec_ow;

@@ -43,6 +43,18 @@ module issue
     output  wire [31:0]      issued_pred_tgt_1_o,
     output  wire [31:0]      issued_pc_0_o,
     output  wire [31:0]      issued_pc_1_o
+
+`ifdef RISCV_FORMAL
+   ,input   wire [`RVFI_BUS] rvfi_0_i
+   ,input   wire [`RVFI_BUS] rvfi_1_i
+   ,output  wire [`RVFI_BUS] rvfi_issued_0_o
+   ,output  wire [`RVFI_BUS] rvfi_issued_1_o
+
+   ,input   wire [63:0] rvfi_order_0_i
+   ,input   wire [63:0] rvfi_order_1_i
+   ,output  wire [63:0] rvfi_issued_order_0_o
+   ,output  wire [63:0] rvfi_issued_order_1_o
+`endif
 );
 
     wire                    issue0_sw_req;
@@ -84,6 +96,12 @@ module issue
     assign issued_pred_tgt_1_o = (switch) ? pred_tgt_0_i: pred_tgt_1_i;
     assign issued_pc_0_o       = (switch) ? pc_1_i      : pc_0_i;
     assign issued_pc_1_o       = (switch) ? pc_0_i      : pc_1_i;
+`ifdef RISCV_FORMAL
+    assign rvfi_issued_0_o     = (switch) ? rvfi_1_i    : rvfi_0_i;
+    assign rvfi_issued_1_o     = (switch) ? rvfi_0_i    : rvfi_1_i;
+    assign rvfi_issued_order_0_o = (switch) ? rvfi_order_1_i : rvfi_order_0_i;
+    assign rvfi_issued_order_1_o = (switch) ? rvfi_order_0_i : rvfi_order_1_i;
+`endif
 
 
 

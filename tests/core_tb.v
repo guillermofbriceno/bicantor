@@ -36,9 +36,9 @@ module core_tb ();
             $dumpvars(0, CORE.ISSUE.REGFILE.registers[i]);
         end
 
-        for(i=0; i < 1024; i = i + 1) begin
-            $dumpvars(0, CORE.FETCH1.PHT.pht[i]);
-        end
+        //for(i=0; i < 1024; i = i + 1) begin
+        //    $dumpvars(0, CORE.FETCH1.PHT.pht[i]);
+        //end
 
         for (i=0; i < numcycles; i=i+1) begin
                 #0.5;

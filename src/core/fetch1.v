@@ -22,7 +22,14 @@ module fetch1
     output      [31:0]  pred_tgt_1_o,
     output      [31:0]  pc_o,
     output reg          stall_o = 0
+
+`ifdef RISCV_FORMAL
+   ,output wire [31:0]  rvfi_pc_wdata_o
+`endif
 );
+`ifdef RISCV_FORMAL
+    assign rvfi_pc_wdata_o = pc_mux_out;
+`endif
 
     // pc starts one step ahead to account for 
     // pc->imem buffer start state, where both

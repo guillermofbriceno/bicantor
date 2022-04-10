@@ -41,8 +41,32 @@ module execute
     output                    corr_taken_o,
     output                    wrong_pred_o,
     output wire [31:0]        fixed_pc_o
-     
+
+`ifdef RISCV_FORMAL
+   ,output  wire [04:0]      rvfi_rs1_addr_0_o
+   ,output  wire [04:0]      rvfi_rs2_addr_0_o
+   ,output  wire [04:0]      rvfi_rs1_addr_1_o
+   ,output  wire [04:0]      rvfi_rs2_addr_1_o
+
+   ,output  wire [31:0]      rvfi_rs1_data_0_o
+   ,output  wire [31:0]      rvfi_rs2_data_0_o
+   ,output  wire [31:0]      rvfi_rs1_data_1_o
+   ,output  wire [31:0]      rvfi_rs2_data_1_o
+`endif
 );
+
+`ifdef RISCV_FORMAL
+    assign      rvfi_rs1_addr_0_o   = inst0_i[`RS1_ENC];
+    assign      rvfi_rs2_addr_0_o   = inst0_i[`RS2_ENC];
+    assign      rvfi_rs1_addr_1_o   = inst1_i[`RS1_ENC];
+    assign      rvfi_rs2_addr_1_o   = inst1_i[`RS2_ENC];
+
+    assign      rvfi_rs1_data_0_o  = bypassed_in1_0;
+    assign      rvfi_rs2_data_0_o  = bypassed_in2_0;
+    assign      rvfi_rs1_data_1_o  = bypassed_in1_1;
+    assign      rvfi_rs2_data_1_o  = bypassed_in2_1;
+`endif
+
     wire [31:0] bypassed_in1_0;
     wire [31:0] bypassed_in2_0;
     wire [31:0] bypassed_in1_1;
