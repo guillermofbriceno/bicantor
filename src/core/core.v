@@ -11,7 +11,7 @@ module core
     output wire         imem_sr_o
 
 `ifdef RISCV_FORMAL
-    `CORE_RVFI_IO
+    `BICANTOR_RVFI_IO
 `endif
 );
 `ifdef RISCV_FORMAL
@@ -40,31 +40,7 @@ module core
     wire [`RVFI_BUS] rvfi_wb_0;
     wire [`RVFI_BUS] rvfi_wb_1;
     
-
-    // RVFI Driver
-    assign rvfi_valid    [`CHAN(1 ,0)]   = !ctrl0_wb_iw[`INVALID] && !(ctrl0_wb_iw == 0);
-    assign rvfi_order    [`CHAN(64,0)]   = rvfi_wb_0[`RVFI_ORDER];
-    assign rvfi_insn     [`CHAN(32,0)]   = rvfi_wb_0[`RVFI_INSN];
-    assign rvfi_rs1_addr [`CHAN(5 ,0)]   = rvfi_wb_0[`RVFI_RS1_ADDR];
-    assign rvfi_rs2_addr [`CHAN(5 ,0)]   = rvfi_wb_0[`RVFI_RS2_ADDR];
-    assign rvfi_rs1_rdata[`CHAN(32,0)]   = rvfi_wb_0[`RVFI_RS1_DATA];
-    assign rvfi_rs2_rdata[`CHAN(32,0)]   = rvfi_wb_0[`RVFI_RS2_DATA];
-    assign rvfi_rd_addr  [`CHAN(5 ,0)]   = ctrl0_wb_iw[`REGWRITE] ? rd_addr_0_wb_iw : 0;
-    assign rvfi_rd_wdata [`CHAN(32,0)]   = ctrl0_wb_iw[`REGWRITE] ? rd_data0_wb_ow : 0;
-    assign rvfi_pc_rdata [`CHAN(32,0)]   = rvfi_wb_0[`RVFI_PC_RDATA];
-    assign rvfi_pc_wdata [`CHAN(32,0)]   = rvfi_wb_0[`RVFI_PC_WDATA];
-
-    assign rvfi_valid    [`CHAN(1 ,1)]   = !ctrl1_wb_iw[`INVALID] && !(ctrl1_wb_iw == 0);
-    assign rvfi_order    [`CHAN(64,1)]   = rvfi_wb_1[`RVFI_ORDER];
-    assign rvfi_insn     [`CHAN(32,1)]   = rvfi_wb_1[`RVFI_INSN];
-    assign rvfi_rs1_addr [`CHAN(5 ,1)]   = rvfi_wb_1[`RVFI_RS1_ADDR];
-    assign rvfi_rs2_addr [`CHAN(5 ,1)]   = rvfi_wb_1[`RVFI_RS2_ADDR];
-    assign rvfi_rs1_rdata[`CHAN(32,1)]   = rvfi_wb_1[`RVFI_RS1_DATA];
-    assign rvfi_rs2_rdata[`CHAN(32,1)]   = rvfi_wb_1[`RVFI_RS2_DATA];
-    assign rvfi_rd_addr  [`CHAN(5 ,1)]   = ctrl1_wb_iw[`REGWRITE] ? rd_addr_1_wb_iw : 0;
-    assign rvfi_rd_wdata [`CHAN(32,1)]   = ctrl1_wb_iw[`REGWRITE] ? rd_data1_wb_ow  : 0;
-    assign rvfi_pc_rdata [`CHAN(32,1)]   = rvfi_wb_1[`RVFI_PC_RDATA];
-    assign rvfi_pc_wdata [`CHAN(32,1)]   = rvfi_wb_1[`RVFI_PC_WDATA];
+    `BICANTOR_RVFI_DRIVER
 `endif
 
 

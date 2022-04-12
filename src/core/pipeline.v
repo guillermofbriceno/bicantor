@@ -292,7 +292,8 @@ module pipeline
             pred_0_issue_o     <= pred_dec_0;
             pred_tgt_0_issue_o <= pred_tgt_dec_0;
         `ifdef RISCV_FORMAL
-            rvfi_issue_0_o     <= rvfi_f2_0;
+            //rvfi_issue_0_o     <= rvfi_f2_0;
+            rvfi_issue_0_o     <= rvfi_dec_0;
         `endif
         end
 
@@ -312,7 +313,7 @@ module pipeline
             pred_1_issue_o     <= pred_taken_1_dec_i;
             pred_tgt_1_issue_o <= pred_tgt_dec_1;
         `ifdef RISCV_FORMAL
-            rvfi_issue_1_o     <= rvfi_f2_1;
+            rvfi_issue_1_o     <= rvfi_dec_1;
         `endif
         end
     end

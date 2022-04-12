@@ -108,23 +108,23 @@ module issue
     regfile REGFILE (
         .clock_i(clock_i),
 
-        .A_rs1_addr_i(issued_inst0_o[`RS1_ENC]),
-        .A_rs2_addr_i(issued_inst0_o[`RS2_ENC]),
-        .A_rd_addr_i(rd_addr0_i),
-        .A_rd_data_i(rd_data0_i),
-        .A_rd_write_i(rd_write0_i),
+        .A_rs1_addr_i   ( (issued_ctrl0_o[`ALU_SRC1_MUX] == `RS1_SEL) ? issued_inst0_o[`RS1_ENC] : 5'b0 ),
+        .A_rs2_addr_i   ( (issued_ctrl0_o[`ALU_SRC2_MUX] == `RS2_SEL) ? issued_inst0_o[`RS2_ENC] : 5'b0 ),
+        .A_rd_addr_i    (rd_addr0_i),
+        .A_rd_data_i    (rd_data0_i),
+        .A_rd_write_i   (rd_write0_i),
 
-        .B_rs1_addr_i(issued_inst1_o[`RS1_ENC]),
-        .B_rs2_addr_i(issued_inst1_o[`RS2_ENC]),
-        .B_rd_addr_i(rd_addr1_i),
-        .B_rd_data_i(rd_data1_i),
-        .B_rd_write_i(rd_write1_i),
+        .B_rs1_addr_i   ( (issued_ctrl1_o[`ALU_SRC1_MUX] == `RS1_SEL) ? issued_inst1_o[`RS1_ENC] : 5'b0 ),
+        .B_rs2_addr_i   ( (issued_ctrl1_o[`ALU_SRC2_MUX] == `RS2_SEL) ? issued_inst1_o[`RS2_ENC] : 5'b0 ),
+        .B_rd_addr_i    (rd_addr1_i),
+        .B_rd_data_i    (rd_data1_i),
+        .B_rd_write_i   (rd_write1_i),
 
-        .A_rs1_data_o(rs1_data0_o),
-        .A_rs2_data_o(rs2_data0_o),
+        .A_rs1_data_o   (rs1_data0_o),
+        .A_rs2_data_o   (rs2_data0_o),
 
-        .B_rs1_data_o(rs1_data1_o),
-        .B_rs2_data_o(rs2_data1_o)
+        .B_rs1_data_o   (rs1_data1_o),
+        .B_rs2_data_o   (rs2_data1_o)
     );
 
 endmodule
