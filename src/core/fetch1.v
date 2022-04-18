@@ -3,6 +3,7 @@
 module fetch1
 (
     input               clock_i,
+    input               reset_i,
 
     input               pc_we_i,
     input  wire [31:0]  update_pc_i,
@@ -31,10 +32,7 @@ module fetch1
     assign rvfi_pc_wdata_o = pc_mux_out;
 `endif
 
-    // pc starts one step ahead to account for 
-    // pc->imem buffer start state, where both
-    // the pc and the buffer are zero at startup
-    reg [31:0]      pc = 8;
+    reg [31:0]      pc = 0;
     reg [31:0]      pc_mux_out = 0;
     reg [`PC_MUX]   pc_mux = `PC_MUX_P8;
 
@@ -55,7 +53,9 @@ module fetch1
     assign pc_o = pc;
 
     always @(posedge clock_i) begin
-        if (pc_we_i)
+        if (reset_i)
+            pc <= 0;
+        else if (pc_we_i)
             pc <= pc_mux_out;
     end
 

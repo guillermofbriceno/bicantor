@@ -4,66 +4,66 @@ module decoder
 (
     input       [31:0]              instruction_i,
     input                           was_fetched_i,
-    output reg  [`CTRL_BUS]         control_o
+    output wire [`CTRL_BUS]         control_o
 );
     wire [6:0] opcode_w;
+    reg [`CTRL_BUS] precheck_control;
+    reg [`CTRL_BUS] postcheck_control;
 
-    assign opcode_w = instruction_i[6:0];
-
-    //always @(*) begin
-    //    case(opcode_w)
-    //        `ALUI_OP:   control_o <= `ALUI_CTRL;
-    //        `ALUR_OP:   control_o <= `ALUR_CTRL;
-    //        `LUI_OP :   control_o <= `LUI_CTRL;
-    //        `AUIPC_OP:  control_o <= `AUIPC_CTRL;
-    //        `JAL_OP:    control_o <= `JAL_CTRL;
-    //        `JALR_OP:   control_o <= `JALR_CTRL;
-    //        `BRANCH_OP: control_o <= `BRANCH_CTRL;
-    //         default:   control_o <= was_fetched_i ? `INVALID_INST_CTRL : 0;
-    //    endcase
-    //end
+    assign control_o = was_fetched_i ? postcheck_control : 0;
 
     always @(*) begin
         casez(instruction_i)
             // LUI Type
-            `INST_LUI:      control_o <= `LUI_CTRL;
+            `INST_LUI:      precheck_control <= `LUI_CTRL;
             // AUIPC Type
-            `INST_AUIPC:    control_o <= `AUIPC_CTRL;
+            `INST_AUIPC:    precheck_control <= `AUIPC_CTRL;
             // JAL Type
-            `INST_JAL:      control_o <= `JAL_CTRL;
+            `INST_JAL:      precheck_control <= `JAL_CTRL;
             // JALR Type
-            `INST_JALR:     control_o <= `JALR_CTRL;
+            `INST_JALR:     precheck_control <= `JALR_CTRL;
             // BRANCH Type
-            `INST_BEQ:      control_o <= `BRANCH_CTRL;
-            `INST_BNE:      control_o <= `BRANCH_CTRL;
-            `INST_BLT:      control_o <= `BRANCH_CTRL;
-            `INST_BGE:      control_o <= `BRANCH_CTRL;
-            `INST_BLTU:     control_o <= `BRANCH_CTRL;
-            `INST_BGEU:     control_o <= `BRANCH_CTRL;
+            `INST_BEQ:      precheck_control <= `BRANCH_CTRL;
+            `INST_BNE:      precheck_control <= `BRANCH_CTRL;
+            `INST_BLT:      precheck_control <= `BRANCH_CTRL;
+            `INST_BGE:      precheck_control <= `BRANCH_CTRL;
+            `INST_BLTU:     precheck_control <= `BRANCH_CTRL;
+            `INST_BGEU:     precheck_control <= `BRANCH_CTRL;
             // ALUI Type
-            `INST_ADDI:     control_o <= `ALUI_CTRL;
-            `INST_SLTI:     control_o <= `ALUI_CTRL;
-            `INST_SLTIU:    control_o <= `ALUI_CTRL;
-            `INST_XORI:     control_o <= `ALUI_CTRL;
-            `INST_ORI:      control_o <= `ALUI_CTRL;
-            `INST_ANDI:     control_o <= `ALUI_CTRL;
-            `INST_SLLI:     control_o <= `ALUI_CTRL;
-            `INST_SRLI:     control_o <= `ALUI_CTRL;
-            `INST_SRAI:     control_o <= `ALUI_CTRL;
+            `INST_ADDI:     precheck_control <= `ALUI_CTRL;
+            `INST_SLTI:     precheck_control <= `ALUI_CTRL;
+            `INST_SLTIU:    precheck_control <= `ALUI_CTRL;
+            `INST_XORI:     precheck_control <= `ALUI_CTRL;
+            `INST_ORI:      precheck_control <= `ALUI_CTRL;
+            `INST_ANDI:     precheck_control <= `ALUI_CTRL;
+            `INST_SLLI:     precheck_control <= `ALUI_CTRL;
+            `INST_SRLI:     precheck_control <= `ALUI_CTRL;
+            `INST_SRAI:     precheck_control <= `ALUI_CTRL;
             // ALU Type
-            `INST_ADD:      control_o <= `ALUR_CTRL;
-            `INST_SUB:      control_o <= `ALUR_CTRL;
-            `INST_SLL:      control_o <= `ALUR_CTRL;
-            `INST_SLT:      control_o <= `ALUR_CTRL;
-            `INST_SLTU:     control_o <= `ALUR_CTRL;
-            `INST_XOR:      control_o <= `ALUR_CTRL;
-            `INST_SRL:      control_o <= `ALUR_CTRL;
-            `INST_SRA:      control_o <= `ALUR_CTRL;
-            `INST_OR:       control_o <= `ALUR_CTRL;
-            `INST_AND:      control_o <= `ALUR_CTRL;
+            `INST_ADD:      precheck_control <= `ALUR_CTRL;
+            `INST_SUB:      precheck_control <= `ALUR_CTRL;
+            `INST_SLL:      precheck_control <= `ALUR_CTRL;
+            `INST_SLT:      precheck_control <= `ALUR_CTRL;
+            `INST_SLTU:     precheck_control <= `ALUR_CTRL;
+            `INST_XOR:      precheck_control <= `ALUR_CTRL;
+            `INST_SRL:      precheck_control <= `ALUR_CTRL;
+            `INST_SRA:      precheck_control <= `ALUR_CTRL;
+            `INST_OR:       precheck_control <= `ALUR_CTRL;
+            `INST_AND:      precheck_control <= `ALUR_CTRL;
             // Catch anything else
-            default:        control_o <= was_fetched_i ? `INVALID_INST_CTRL : 0;
+            default:        precheck_control <= `INVALID_INST_CTRL;
         endcase
+
+        if (   precheck_control[`REGWRITE]     && 
+              (instruction_i[`RD_ENC]  == 0)   && 
+            !((instruction_i[`RS1_ENC] == 0)   &&
+              (instruction_i[`RS2_ENC] == 0))  &&
+             !(precheck_control == `JALR_CTRL) &&
+             !(precheck_control == `JAL_CTRL )   )
+            postcheck_control <= `INVALID_INST_CTRL;
+        else
+            postcheck_control <= precheck_control;
+            
     end
 
 

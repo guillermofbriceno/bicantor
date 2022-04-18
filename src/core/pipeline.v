@@ -3,7 +3,9 @@
 module pipeline
 (
     input  wire        clock_i,
+    input  wire        reset_i,
     output wire        frontend_we_o,
+    output reg         rst_ready_sync_o = 0,
 
     // f1
     input  wire [31:0] f1_pc_i,
@@ -126,11 +128,11 @@ module pipeline
 );
 
 `ifdef RISCV_FORMAL
-    reg [`RVFI_BUS] rvfi_f2_0       = 0;
-    reg [`RVFI_BUS] rvfi_f2_1       = 0;
+    reg [`RVFI_BUS] rvfi_f2_0;
+    reg [`RVFI_BUS] rvfi_f2_1;
 
-    reg [`RVFI_BUS] rvfi_dec_0      = 0;
-    reg [`RVFI_BUS] rvfi_dec_1      = 0;
+    reg [`RVFI_BUS] rvfi_dec_0;
+    reg [`RVFI_BUS] rvfi_dec_1;
 
     reg [`RVFI_BUS] rvfi_exec_0     = 0;
     reg [`RVFI_BUS] rvfi_exec_1     = 0;
@@ -171,6 +173,18 @@ module pipeline
             endcase
         end
     end
+
+    initial begin
+        rvfi_f2_0[`RVFI_PC_WDATA] <= 32'd0;
+        rvfi_f2_1[`RVFI_PC_WDATA] <= 32'd0;
+        //rvfi_f2_0[`RVFI_PC_WDATA] <= 32'd8;
+        //rvfi_f2_1[`RVFI_PC_WDATA] <= 32'd12;
+        //rvfi_dec_0[`RVFI_PC_WDATA] <= 8;
+        //rvfi_dec_1[`RVFI_PC_WDATA] <= 12;
+        rvfi_dec_0 <= 0;
+        rvfi_dec_1 <= 0;
+    end
+
 `endif
 
     wire frontend_we_w;
@@ -191,6 +205,20 @@ module pipeline
 
     assign frontend_we_o = frontend_we_w;
 
+    // Since FETCH is divided into two stages, the PC is buffered 
+    // before imem sees the requested address. After reset, the
+    // first inst coming out of imem is invalid, addressed by the
+    // buffer before it gets updated with the real PC value. So,
+    // we shouldn't allow the pipeline to buffer the first inst 
+    // coming out of imem. If we don't do this, the first 
+    // instruction will be duplicated after reset. Look at f2/dec.
+    always @(posedge clock_i) begin
+        if (reset_i)
+            rst_ready_sync_o <= 0;
+        else
+            rst_ready_sync_o <= 1;
+    end
+
     /*
     *  F1 / F2 or MEM Buffer
     */
@@ -200,7 +228,19 @@ module pipeline
     reg  [31:0] pred_tgt_f2_1 = 0;
 
     always @(posedge clock_i) begin
-        if (frontend_we_w) begin
+        if (reset_i) begin
+            pred_f2_0     <= 0;
+            pred_f2_1_o   <= 0;
+            pred_tgt_f2_0 <= 0;
+            pred_tgt_f2_1 <= 0;
+            pc_f2_r       <= 0;
+        `ifdef RISCV_FORMAL
+            rvfi_f2_0[`RVFI_PC_RDATA] <= 0;
+            rvfi_f2_0[`RVFI_PC_WDATA] <= 0;
+            rvfi_f2_1[`RVFI_PC_RDATA] <= 0;
+            rvfi_f2_1[`RVFI_PC_WDATA] <= 0;
+        `endif
+        end else if (frontend_we_w) begin
             pred_f2_0     <= f1_pred_0_i;
             pred_f2_1_o   <= f1_pred_1_i;
             pred_tgt_f2_0 <= f1_pred_tgt_0_i;
@@ -208,9 +248,11 @@ module pipeline
             pc_f2_r       <= f1_pc_i;
         `ifdef RISCV_FORMAL
             rvfi_f2_0[`RVFI_PC_RDATA] <= f1_pc_i;
-            rvfi_f2_0[`RVFI_PC_WDATA] <= rvfi_pc_wdata_f1_i;
+            rvfi_f2_0[`RVFI_PC_WDATA] <= rvfi_pc_wdata_f1_i - 4;
+            //rvfi_f2_1[`RVFI_PC_RDATA] <= f1_pc_i + 4;
+            //rvfi_f2_1[`RVFI_PC_WDATA] <= rvfi_pc_wdata_f1_i + 4;
             rvfi_f2_1[`RVFI_PC_RDATA] <= f1_pc_i + 4;
-            rvfi_f2_1[`RVFI_PC_WDATA] <= rvfi_pc_wdata_f1_i + 4;
+            rvfi_f2_1[`RVFI_PC_WDATA] <= rvfi_pc_wdata_f1_i;
         `endif
         end
     end
@@ -228,13 +270,13 @@ module pipeline
 
     always @(posedge clock_i) begin
         // Fetch Slot 0
-        if (dec_flush_i && frontend_we_w) begin
+        if ((dec_flush_i && frontend_we_w) || reset_i) begin
             pred_dec_0          <= 0;
             was_fetched_0_dec_o <= 0;
         `ifdef RISCV_FORMAL
             rvfi_dec_0          <= 0;
         `endif
-        end else if (frontend_we_w) begin
+        end else if (frontend_we_w && rst_ready_sync_o) begin
             pc_dec0_o           <= pc_f2_r;
             pred_dec_0          <= pred_f2_0;
             pred_tgt_dec_0      <= pred_tgt_f2_0;
@@ -246,13 +288,13 @@ module pipeline
         end
 
         // Fetch Slot 1
-        if (dec_flush_i && frontend_we_w) begin
+        if ((dec_flush_i && frontend_we_w) || reset_i) begin
             pred_dec_1          <= 0;
             was_fetched_1_dec_o <= 0;
         `ifdef RISCV_FORMAL
             rvfi_dec_1          <= 0;
         `endif
-        end else if (frontend_we_w) begin
+        end else if (frontend_we_w && rst_ready_sync_o) begin
             pc_dec1_o           <= pc_f2_r + 4;
             pred_dec_1          <= pred_f2_1_o;
             pred_tgt_dec_1      <= pred_tgt_f2_1;
@@ -277,7 +319,7 @@ module pipeline
 
     always @(posedge clock_i) begin
         // Issue 0
-        if (issue_0_sr) begin
+        if (issue_0_sr || reset_i) begin
             inst0_issue_o      <= 0;
             ctrl0_issue_o      <= 0;
             pred_0_issue_o     <= 0;
@@ -298,7 +340,7 @@ module pipeline
         end
 
         // Issue 1
-        if (issue_1_sr) begin
+        if (issue_1_sr || reset_i) begin
             inst1_issue_o      <= 0;
             ctrl1_issue_o      <= 0;
             pred_1_issue_o     <= 0;
@@ -323,7 +365,7 @@ module pipeline
     */
     always @(posedge clock_i) begin
         // Exec 0
-        if (issue0_stall_w || exec_wrong_branch_i) begin
+        if ((issue0_stall_w || exec_wrong_branch_i) || reset_i) begin
             inst0_exec_o        <= 0;
             ctrl0_exec_o        <= 0;
             pred_exec_o         <= 0;
@@ -345,7 +387,7 @@ module pipeline
         end
 
         // Exec 1
-        if (issue1_stall_w || exec_wrong_branch_i) begin
+        if ((issue1_stall_w || exec_wrong_branch_i) || reset_i) begin
             inst1_exec_o        <= 0;
             ctrl1_exec_o        <= 0;
         `ifdef RISCV_FORMAL
@@ -372,7 +414,14 @@ module pipeline
 
     always @(posedge clock_i) begin
         // LSU 0
-        if (0) begin
+        if (reset_i) begin
+            ctrl0_lsu_o     <= 0;
+            alu_0_lsu_o     <= 0;
+            rd_addr_0_lsu_o <= 0;
+            pc_0_lsu        <= 0;
+        `ifdef RISCV_FORMAL
+            rvfi_lsu_0      <= 0;
+        `endif
         end else if (backend_we_w) begin
             ctrl0_lsu_o     <= ctrl0_exec_o;
             alu_0_lsu_o     <= alu_0_exec_i;
@@ -391,7 +440,7 @@ module pipeline
         end
 
         // LSU 1
-        if (lsu_1_sr && backend_we_w) begin
+        if ((lsu_1_sr && backend_we_w) || reset_i) begin
             ctrl1_lsu_o     <= 0;
         `ifdef SIM_TEST
             alu_1_lsu_o     <= 0;
@@ -424,7 +473,14 @@ module pipeline
     */
     always @(posedge clock_i) begin
         // Exec 0
-        if (0) begin
+        if (reset_i) begin
+            alu_0_wb_o      <= 0;
+            ctrl0_wb_o      <= 0;
+            rd_addr_0_wb_o  <= 0;
+            pc_0_wb_o       <= 0;
+        `ifdef RISCV_FORMAL
+            rvfi_wb_0_o     <= 0;
+        `endif
         end else if (backend_we_w) begin
             alu_0_wb_o      <= alu_0_lsu_o;
             ctrl0_wb_o      <= ctrl0_lsu_o;
@@ -436,7 +492,14 @@ module pipeline
         end
 
         // Exec 1
-        if (0) begin
+        if (reset_i) begin
+            alu_1_wb_o      <= 0;
+            ctrl1_wb_o      <= 0;
+            rd_addr_1_wb_o  <= 0;
+            pc_1_wb_o       <= 0;
+        `ifdef RISCV_FORMAL
+            rvfi_wb_1_o     <= 0;
+        `endif
         end else if (backend_we_w) begin
             alu_1_wb_o      <= alu_1_lsu_o;
             ctrl1_wb_o      <= ctrl1_lsu_o;

@@ -12,8 +12,8 @@ testnames = [
 
 testcycles= [
         10,
-        22, # 22
-        125
+        23,
+        122
 ]
 
 results = []

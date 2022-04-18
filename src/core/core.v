@@ -5,6 +5,7 @@ module core
 (
     input  wire         clock_i,
     input  wire [63:0]  data_i,
+    input  wire         reset_i,
 
     output wire [09:0]  addr_o,
     output wire         imemstall_o,
@@ -50,12 +51,15 @@ module core
     reg wb_stall_ow   = 0; //temp
 
     wire frontend_we;
+    wire rst_ready_sync;
     assign imemstall_o = frontend_we;
-    assign imem_sr_o = f2_flush_ow;
+    assign imem_sr_o = f2_flush_ow || !rst_ready_sync || reset_i;
     
     pipeline PIPELINE(
         .clock_i                (clock_i),
+        .reset_i                (reset_i),
         .frontend_we_o          (frontend_we),
+        .rst_ready_sync_o       (rst_ready_sync),
 
         // f1
         .f1_pc_i                (f1_pc_ow),
@@ -179,6 +183,7 @@ module core
 
     fetch1 FETCH1(
         .clock_i                (clock_i),
+        .reset_i                (reset_i),
         .pc_we_i                (frontend_we),
         .update_pc_i            (pc_0_exec_iw),
         .update_tgt_i           (corr_tgt_exec_ow),
@@ -216,6 +221,7 @@ module core
 
     fetch2 FETCH2(
         .clock_i                (clock_i),
+        .reset_i                (reset_i || !rst_ready_sync),
         .idata_i                (data_i),
         .branch_mispred_i       (wrong_pred_exec_ow),
         .wasnt_branch_i         (wasnt_branch_ow),
