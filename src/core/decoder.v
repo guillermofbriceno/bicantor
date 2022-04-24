@@ -56,13 +56,15 @@ module decoder
 
         if (   precheck_control[`REGWRITE]     && 
               (instruction_i[`RD_ENC]  == 0)   && 
-            !((instruction_i[`RS1_ENC] == 0)   &&
-              (instruction_i[`RS2_ENC] == 0))  &&
              !(precheck_control == `JALR_CTRL) &&
              !(precheck_control == `JAL_CTRL )   )
             postcheck_control <= `INVALID_INST_CTRL;
         else
             postcheck_control <= precheck_control;
+
+//        if ( precheck_control[`REGWRITE]    &&
+//            (instruction_i[`RD_ENC] == 0)  &&
+//            (precheck_control[`RS1_ACTIVE] && (instruction_i[`])))
             
     end
 

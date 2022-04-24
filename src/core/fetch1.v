@@ -61,7 +61,7 @@ module fetch1
 
     always @(*) begin
         case({pred_0_o, pred_1_o, wrong_pred_i, wasnt_branch_i})
-            4'b0000: pc_mux_out <= pc + 8;
+            4'b0000: pc_mux_out <= pc + 32'd8;
 
             4'b0100: pc_mux_out <= pred_tgt_1_o;
             4'b1000: pc_mux_out <= pred_tgt_0_o;
@@ -72,13 +72,13 @@ module fetch1
             4'b1010: pc_mux_out <= fixed_pc_i;
             4'b1110: pc_mux_out <= fixed_pc_i;
 
-            4'b0001: pc_mux_out <= wasnt_br_pc_i + 4;
+            4'b0001: pc_mux_out <= wasnt_br_pc_i + 32'd4;
             4'b0011: pc_mux_out <= fixed_pc_i;
-            4'b0101: pc_mux_out <= wasnt_br_pc_i + 4;
+            4'b0101: pc_mux_out <= wasnt_br_pc_i + 32'd4;
             4'b0111: pc_mux_out <= fixed_pc_i;
-            4'b1001: pc_mux_out <= wasnt_br_pc_i + 4;
+            4'b1001: pc_mux_out <= wasnt_br_pc_i + 32'd4;
             4'b1011: pc_mux_out <= fixed_pc_i;
-            4'b1101: pc_mux_out <= wasnt_br_pc_i + 4;
+            4'b1101: pc_mux_out <= wasnt_br_pc_i + 32'd4;
             4'b1111: pc_mux_out <= fixed_pc_i;
             default: pc_mux_out <= 32'bX;
         endcase
@@ -214,8 +214,8 @@ module branch_target_buffer
     wire [tag_width-1:0] tag_out_1;
 
     // Read tags and targets
-    assign target_addr_0_o  = targets[pc_internal[`IDX_RANGE(ABITS)]];
-    assign target_addr_1_o  = targets[pc_internal[`IDX_RANGE(ABITS)] + 1];
+    assign target_addr_0_o  = targets[pc_internal[`IDX_RANGE(ABITS)]] & 32'hFFFFFFFC;
+    assign target_addr_1_o  = targets[pc_internal[`IDX_RANGE(ABITS)] + 1] & 32'hFFFFFFFC;
     assign tag_out_0        = tags[pc_internal[`IDX_RANGE(ABITS)]];
     assign tag_out_1        = tags[pc_internal[`IDX_RANGE(ABITS)] + 1];
 

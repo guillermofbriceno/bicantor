@@ -34,6 +34,7 @@ module pipeline
     input  wire [31:0] inst1_dec_i,
     input  wire [`CTRL_BUS] ctrl0_dec_i,
     input  wire [`CTRL_BUS] ctrl1_dec_i,
+    input  wire        wasnt_branch_dec_i,
     input  wire        dec_flush_i,
     input  wire        pred_taken_1_dec_i,
     input  wire        dec_stall_i,
@@ -128,11 +129,11 @@ module pipeline
 );
 
 `ifdef RISCV_FORMAL
-    reg [`RVFI_BUS] rvfi_f2_0;
-    reg [`RVFI_BUS] rvfi_f2_1;
+    reg [`RVFI_BUS] rvfi_f2_0       = 0;
+    reg [`RVFI_BUS] rvfi_f2_1       = 0;
 
-    reg [`RVFI_BUS] rvfi_dec_0;
-    reg [`RVFI_BUS] rvfi_dec_1;
+    reg [`RVFI_BUS] rvfi_dec_0      = 0;
+    reg [`RVFI_BUS] rvfi_dec_1      = 0;
 
     reg [`RVFI_BUS] rvfi_exec_0     = 0;
     reg [`RVFI_BUS] rvfi_exec_1     = 0;
@@ -173,18 +174,6 @@ module pipeline
             endcase
         end
     end
-
-    initial begin
-        rvfi_f2_0[`RVFI_PC_WDATA] <= 32'd0;
-        rvfi_f2_1[`RVFI_PC_WDATA] <= 32'd0;
-        //rvfi_f2_0[`RVFI_PC_WDATA] <= 32'd8;
-        //rvfi_f2_1[`RVFI_PC_WDATA] <= 32'd12;
-        //rvfi_dec_0[`RVFI_PC_WDATA] <= 8;
-        //rvfi_dec_1[`RVFI_PC_WDATA] <= 12;
-        rvfi_dec_0 <= 0;
-        rvfi_dec_1 <= 0;
-    end
-
 `endif
 
     wire frontend_we_w;
@@ -199,7 +188,7 @@ module pipeline
     assign issue1_stall_w = issue1_special_stall_i && backend_we_w && !exec_wrong_branch_i;
 
     assign backend_we_w  = ! ( f1_stall_i || f2_stall_i || dec_stall_i || exec_stall_i || mem_stall_i || wb_stall_i );
-    assign frontend_we_w = ( (backend_we_w) && (!issue0_stall_w) && (!issue1_stall_w) );
+    assign frontend_we_w = ( (backend_we_w) && (!issue0_stall_w) && (!issue1_stall_w) || wasnt_branch_dec_i);
 
     assign f1_pc_we_o = frontend_we_w;
 
@@ -248,10 +237,13 @@ module pipeline
             pc_f2_r       <= f1_pc_i;
         `ifdef RISCV_FORMAL
             rvfi_f2_0[`RVFI_PC_RDATA] <= f1_pc_i;
-            rvfi_f2_0[`RVFI_PC_WDATA] <= rvfi_pc_wdata_f1_i - 4;
-            //rvfi_f2_1[`RVFI_PC_RDATA] <= f1_pc_i + 4;
-            //rvfi_f2_1[`RVFI_PC_WDATA] <= rvfi_pc_wdata_f1_i + 4;
-            rvfi_f2_1[`RVFI_PC_RDATA] <= f1_pc_i + 4;
+            rvfi_f2_1[`RVFI_PC_RDATA] <= f1_pc_i + 32'b100;
+
+            if (f1_pred_0_i) 
+                rvfi_f2_0[`RVFI_PC_WDATA] <= rvfi_pc_wdata_f1_i;
+            else
+                rvfi_f2_0[`RVFI_PC_WDATA] <= f1_pc_i + 32'b100;
+
             rvfi_f2_1[`RVFI_PC_WDATA] <= rvfi_pc_wdata_f1_i;
         `endif
         end
@@ -334,8 +326,12 @@ module pipeline
             pred_0_issue_o     <= pred_dec_0;
             pred_tgt_0_issue_o <= pred_tgt_dec_0;
         `ifdef RISCV_FORMAL
-            //rvfi_issue_0_o     <= rvfi_f2_0;
-            rvfi_issue_0_o     <= rvfi_dec_0;
+            if (wasnt_branch_dec_i) begin
+                rvfi_issue_0_o[`RVFI_PC_RDATA]  <= rvfi_dec_0[`RVFI_PC_RDATA];
+                rvfi_issue_0_o[`RVFI_PC_WDATA]  <= rvfi_pc_wdata_f1_i - 4;
+            end else begin
+                rvfi_issue_0_o     <= rvfi_dec_0;
+            end
         `endif
         end
 
@@ -355,7 +351,12 @@ module pipeline
             pred_1_issue_o     <= pred_taken_1_dec_i;
             pred_tgt_1_issue_o <= pred_tgt_dec_1;
         `ifdef RISCV_FORMAL
-            rvfi_issue_1_o     <= rvfi_dec_1;
+            if (wasnt_branch_dec_i) begin
+                rvfi_issue_1_o[`RVFI_PC_RDATA]  <= rvfi_dec_1[`RVFI_PC_RDATA];
+                rvfi_issue_1_o[`RVFI_PC_WDATA]  <= rvfi_pc_wdata_f1_i;
+            end else begin
+                rvfi_issue_1_o     <= rvfi_dec_1;
+            end
         `endif
         end
     end
@@ -428,8 +429,16 @@ module pipeline
             rd_addr_0_lsu_o <= inst0_exec_o[`RD_ENC];
             pc_0_lsu        <= pc_0_exec_o;
         `ifdef RISCV_FORMAL
+            // Update RVFI next PC if we mispred
+            if (exec_wrong_branch_i && (pc_0_exec_o < pc_1_exec_o)) begin
+                rvfi_lsu_0[`RVFI_PC_WDATA]  <= rvfi_pc_wdata_f1_i;
+            end else if (exec_wrong_branch_i && (pc_0_exec_o > pc_1_exec_o)) begin
+                rvfi_lsu_0[`RVFI_PC_WDATA]  <= rvfi_pc_wdata_f1_i;
+            end else begin
+                rvfi_lsu_0[`RVFI_PC_WDATA]  <= rvfi_exec_0[`RVFI_PC_WDATA];
+            end
+
             rvfi_lsu_0[`RVFI_PC_RDATA]  <= rvfi_exec_0[`RVFI_PC_RDATA];
-            rvfi_lsu_0[`RVFI_PC_WDATA]  <= rvfi_exec_0[`RVFI_PC_WDATA];
             rvfi_lsu_0[`RVFI_ORDER]     <= rvfi_exec_0[`RVFI_ORDER];
             rvfi_lsu_0[`RVFI_RS1_ADDR]  <= rvfi_rs1_a_exec_0_i;
             rvfi_lsu_0[`RVFI_RS2_ADDR]  <= rvfi_rs2_a_exec_0_i;
@@ -456,8 +465,13 @@ module pipeline
             rd_addr_1_lsu_o <= inst1_exec_o[`RD_ENC];
             pc_1_lsu        <= pc_1_exec_o;
         `ifdef RISCV_FORMAL
+            if (exec_wrong_branch_i && (pc_0_exec_o < pc_1_exec_o)) begin
+                rvfi_lsu_1[`RVFI_PC_WDATA]  <= rvfi_pc_wdata_f1_i;
+            end else begin
+                rvfi_lsu_1[`RVFI_PC_WDATA]  <= rvfi_exec_1[`RVFI_PC_WDATA];
+            end
+
             rvfi_lsu_1[`RVFI_PC_RDATA]  <= rvfi_exec_1[`RVFI_PC_RDATA];
-            rvfi_lsu_1[`RVFI_PC_WDATA]  <= rvfi_exec_1[`RVFI_PC_WDATA];
             rvfi_lsu_1[`RVFI_ORDER]     <= rvfi_exec_1[`RVFI_ORDER];
             rvfi_lsu_1[`RVFI_RS1_ADDR]  <= rvfi_rs1_a_exec_1_i;
             rvfi_lsu_1[`RVFI_RS2_ADDR]  <= rvfi_rs2_a_exec_1_i;

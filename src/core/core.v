@@ -88,6 +88,7 @@ module core
         .inst1_dec_i            (inst1_dec_ow),
         .ctrl0_dec_i            (ctrl0_dec_ow),
         .ctrl1_dec_i            (ctrl1_dec_ow),
+        .wasnt_branch_dec_i     (wasnt_branch_ow),
         .dec_flush_i            (f2_flush_ow),
         .dec_stall_i            (dec_stall_ow),
         .pred_taken_1_dec_i     (pred_taken_1_dec_ow),
@@ -222,11 +223,11 @@ module core
     fetch2 FETCH2(
         .clock_i                (clock_i),
         .reset_i                (reset_i || !rst_ready_sync),
+        .frontend_we_i          (frontend_we),
         .idata_i                (data_i),
         .branch_mispred_i       (wrong_pred_exec_ow),
         .wasnt_branch_i         (wasnt_branch_ow),
         .zero_1_i               (pred_taken_0_dec_iw),
-        //.zero_1_i               (f2_pred_0_iw || pred_taken_0_dec_iw),
         .pred_1_i               (f2_pred_1_iw),
 
         .inst0_o                (f2_inst0_ow),

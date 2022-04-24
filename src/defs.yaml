@@ -67,10 +67,43 @@
       "INST_AND"   : "32'b0000000_?????_?????_111_?????_0110011"
 
 - type: enum
+  enum_name: "INST_ENUM"
   values:
-    - "TEMP2"
-    - "TEMP3"
-    - "TEMP4"
+    - "ENUM_LUI"
+      # AUIPC Type
+    - "ENUM_AUIPC"
+      # JAL Type
+    - "ENUM_JAL"
+      # JALR Type
+    - "ENUM_JALR"
+      # BRANCH Type
+    - "ENUM_BEQ"
+    - "ENUM_BNE"
+    - "ENUM_BLT"
+    - "ENUM_BGE"
+    - "ENUM_BLTU"
+    - "ENUM_BGEU"
+      # ALUI Type
+    - "ENUM_ADDI"
+    - "ENUM_SLTI"
+    - "ENUM_SLTIU"
+    - "ENUM_XORI"
+    - "ENUM_ORI"
+    - "ENUM_ANDI"
+    - "ENUM_SLLI"
+    - "ENUM_SRLI"
+    - "ENUM_SRAI"
+      # ALUR Type
+    - "ENUM_ADD"
+    - "ENUM_SUB"
+    - "ENUM_SLL"
+    - "ENUM_SLT"
+    - "ENUM_SLTU"
+    - "ENUM_XOR"
+    - "ENUM_SRL"
+    - "ENUM_SRA"
+    - "ENUM_OR"
+    - "ENUM_AND"
 
 - type: mux
   mux_name: "PC_MUX"

@@ -37,7 +37,11 @@ def plain_def(obj):
     return writelist(defs)
 
 def enum(obj):
+    num_enum_bits = math.ceil( math.log2( len(obj["values"]) ) )
+
     def_dict = enum_list(obj["values"])
+    def_dict[obj["enum_name"]] = f"{num_enum_bits-1}:0"
+
     defs = define(def_dict)
     return writelist(defs)
 

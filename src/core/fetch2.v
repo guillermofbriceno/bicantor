@@ -2,6 +2,7 @@ module fetch2
 (
     input  wire         clock_i,
     input  wire         reset_i,
+    input  wire         frontend_we_i,
     input  wire [63:0]  idata_i,
     input  wire         branch_mispred_i,
     input  wire         wasnt_branch_i,
@@ -26,15 +27,14 @@ module fetch2
 
         if (zero_1_i || reset_i) begin
             inst1_o  <= 0;
-            //pred_1_o <= 0;
         end else begin
             inst1_o  <= idata_i[31:0];
-            //pred_1_o <= pred_1_i;
         end
     end
 
     always @(posedge clock_i) begin
-        second_flush <= (wasnt_branch_i || branch_mispred_i);
+        if (frontend_we_i)
+            second_flush <= (wasnt_branch_i || branch_mispred_i);
     end
 
 endmodule
