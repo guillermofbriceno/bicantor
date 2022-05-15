@@ -62,10 +62,6 @@ module decoder
         else
             postcheck_control <= precheck_control;
 
-//        if ( precheck_control[`REGWRITE]    &&
-//            (instruction_i[`RD_ENC] == 0)  &&
-//            (precheck_control[`RS1_ACTIVE] && (instruction_i[`])))
-            
     end
 
 

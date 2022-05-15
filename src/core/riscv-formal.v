@@ -36,8 +36,8 @@ reg  [ 2 - 1:0]  rvfi_ch0_mode      = 0;                                        
 reg  [ 2 - 1:0]  rvfi_ch0_ixl       = 0;                                                \
 wire [ 5 - 1:0]  rvfi_ch0_rs1_addr  = rvfi_wb_0[`RVFI_RS1_ADDR];                        \
 wire [ 5 - 1:0]  rvfi_ch0_rs2_addr  = ( ctrl0_wb_iw[`ALU_SRC2_MUX] == `RS2_SEL ) ? rvfi_wb_0[`RVFI_RS2_ADDR] : 0; \
-wire [32 - 1:0]  rvfi_ch0_rs1_rdata = rvfi_wb_0[`RVFI_RS1_DATA];                        \
-wire [32 - 1:0]  rvfi_ch0_rs2_rdata = rvfi_wb_0[`RVFI_RS2_DATA];                        \
+wire [32 - 1:0]  rvfi_ch0_rs1_rdata = ( (ctrl0_wb_iw[`ALU_SRC1_MUX] == `RS1_SEL) && (rvfi_wb_0[`RVFI_RS1_ADDR] != 0) ) ? rvfi_wb_0[`RVFI_RS1_DATA] : 0; \
+wire [32 - 1:0]  rvfi_ch0_rs2_rdata = ( (ctrl0_wb_iw[`ALU_SRC2_MUX] == `RS2_SEL) && (rvfi_wb_0[`RVFI_RS2_ADDR] != 0) ) ? rvfi_wb_0[`RVFI_RS2_DATA] : 0; \
 wire [ 5 - 1:0]  rvfi_ch0_rd_addr   = ctrl0_wb_iw[`REGWRITE] ? rd_addr_0_wb_iw : 0;     \
 wire [32 - 1:0]  rvfi_ch0_rd_wdata  = (  rd_addr_0_wb_iw != 5'b0 ) ? rd_data0_wb_ow : 0;\
 wire [32 - 1:0]  rvfi_ch0_pc_rdata  = rvfi_wb_0[`RVFI_PC_RDATA];                        \
@@ -59,8 +59,8 @@ reg  [ 2 - 1:0]  rvfi_ch1_mode      = 0;                                        
 reg  [ 2 - 1:0]  rvfi_ch1_ixl       = 0;                                                \
 wire [ 5 - 1:0]  rvfi_ch1_rs1_addr  = rvfi_wb_1[`RVFI_RS1_ADDR];                        \
 wire [ 5 - 1:0]  rvfi_ch1_rs2_addr  = ( ctrl1_wb_iw[`ALU_SRC2_MUX] == `RS2_SEL ) ? rvfi_wb_1[`RVFI_RS2_ADDR] : 0; \
-wire [32 - 1:0]  rvfi_ch1_rs1_rdata = rvfi_wb_1[`RVFI_RS1_DATA];                        \
-wire [32 - 1:0]  rvfi_ch1_rs2_rdata = rvfi_wb_1[`RVFI_RS2_DATA];                        \
+wire [32 - 1:0]  rvfi_ch1_rs1_rdata = ( (ctrl1_wb_iw[`ALU_SRC1_MUX] == `RS1_SEL) && (rvfi_wb_1[`RVFI_RS1_ADDR] != 0) ) ? rvfi_wb_1[`RVFI_RS1_DATA] : 0; \
+wire [32 - 1:0]  rvfi_ch1_rs2_rdata = ( (ctrl1_wb_iw[`ALU_SRC2_MUX] == `RS2_SEL) && (rvfi_wb_1[`RVFI_RS1_ADDR] != 0) ) ? rvfi_wb_1[`RVFI_RS2_DATA] : 0; \
 wire [ 5 - 1:0]  rvfi_ch1_rd_addr   = ctrl1_wb_iw[`REGWRITE] ? rd_addr_1_wb_iw : 0;     \
 wire [32 - 1:0]  rvfi_ch1_rd_wdata  = (  rd_addr_1_wb_iw != 5'b0 ) ? rd_data1_wb_ow : 0;\
 wire [32 - 1:0]  rvfi_ch1_pc_rdata  = rvfi_wb_1[`RVFI_PC_RDATA];                        \

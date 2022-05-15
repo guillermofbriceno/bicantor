@@ -27,10 +27,10 @@ module regfile
     reg [04:0] B_rs1_address_internal;
     reg [04:0] B_rs2_address_internal;
 
-    assign A_rs1_data_o = registers[A_rs1_address_internal];
-    assign A_rs2_data_o = registers[A_rs2_address_internal];
-    assign B_rs1_data_o = registers[B_rs1_address_internal];
-    assign B_rs2_data_o = registers[B_rs2_address_internal];
+    assign A_rs1_data_o = ( A_rs1_address_internal != 0 ) ? registers[A_rs1_address_internal] : 0;
+    assign A_rs2_data_o = ( A_rs2_address_internal != 0 ) ? registers[A_rs2_address_internal] : 0;
+    assign B_rs1_data_o = ( B_rs1_address_internal != 0 ) ? registers[B_rs1_address_internal] : 0;
+    assign B_rs2_data_o = ( B_rs2_address_internal != 0 ) ? registers[B_rs2_address_internal] : 0;
 
     /*
     *  Initialize registers at zero and dump states

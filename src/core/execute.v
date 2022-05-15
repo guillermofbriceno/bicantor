@@ -174,9 +174,9 @@ module execute
         endcase
 
         case({ctrl0_i[`COND_BRANCH], ctrl0_i[`JAL], ctrl0_i[`JALR]})
-            3'b100:  corr_tgt_o <= `B_IMM_ENC(inst0_i) + pc_0_i;
-            3'b010:  corr_tgt_o <= `J_IMM_ENC(inst0_i) + pc_0_i;
-            3'b001:  corr_tgt_o <= `I_IMM_ENC(inst0_i) + alu_in1_0;
+            3'b100:  corr_tgt_o <= ( `B_IMM_ENC(inst0_i) + pc_0_i ) & 32'hFFFFFFFC;
+            3'b010:  corr_tgt_o <= ( `J_IMM_ENC(inst0_i) + pc_0_i ) & 32'hFFFFFFFC;
+            3'b001:  corr_tgt_o <= ( `I_IMM_ENC(inst0_i) + alu_in1_0 ) & 32'hFFFFFFFC;
             default: corr_tgt_o <= 32'bX;
         endcase
     end

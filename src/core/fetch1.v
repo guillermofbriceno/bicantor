@@ -58,30 +58,42 @@ module fetch1
         else if (pc_we_i)
             pc <= pc_mux_out;
     end
-
+    
     always @(*) begin
-        case({pred_0_o, pred_1_o, wrong_pred_i, wasnt_branch_i})
-            4'b0000: pc_mux_out <= pc + 32'd8;
+//        case({pred_0_o, pred_1_o, wrong_pred_i, wasnt_branch_i})
+//            4'b0000: pc_mux_out <= pc + 32'd8;
+//
+//            4'b0100: pc_mux_out <= pred_tgt_1_o;
+//            4'b1000: pc_mux_out <= pred_tgt_0_o;
+//            4'b1100: pc_mux_out <= pred_tgt_0_o;
+//
+//            4'b0010: pc_mux_out <= fixed_pc_i;
+//            4'b0110: pc_mux_out <= fixed_pc_i;
+//            4'b1010: pc_mux_out <= fixed_pc_i;
+//            4'b1110: pc_mux_out <= fixed_pc_i;
+//
+//            4'b0001: pc_mux_out <= wasnt_br_pc_i + 32'd4;
+//            4'b0011: pc_mux_out <= fixed_pc_i;
+//            4'b0101: pc_mux_out <= wasnt_br_pc_i + 32'd4;
+//            4'b0111: pc_mux_out <= fixed_pc_i;
+//            4'b1001: pc_mux_out <= wasnt_br_pc_i + 32'd4;
+//            4'b1011: pc_mux_out <= fixed_pc_i;
+//            4'b1101: pc_mux_out <= wasnt_br_pc_i + 32'd4;
+//            4'b1111: pc_mux_out <= fixed_pc_i;
+//            default: pc_mux_out <= 32'bX;
+//        endcase
 
-            4'b0100: pc_mux_out <= pred_tgt_1_o;
-            4'b1000: pc_mux_out <= pred_tgt_0_o;
-            4'b1100: pc_mux_out <= pred_tgt_0_o;
+        if (wrong_pred_i)
+            pc_mux_out <= fixed_pc_i;
+        else if (wasnt_branch_i)
+            pc_mux_out <= wasnt_br_pc_i + 32'd4;
+        else if (pred_0_o)
+            pc_mux_out <= pred_tgt_0_o;
+        else if (pred_1_o)
+            pc_mux_out <= pred_tgt_1_o;
+        else
+            pc_mux_out <= pc + 32'd8;
 
-            4'b0010: pc_mux_out <= fixed_pc_i;
-            4'b0110: pc_mux_out <= fixed_pc_i;
-            4'b1010: pc_mux_out <= fixed_pc_i;
-            4'b1110: pc_mux_out <= fixed_pc_i;
-
-            4'b0001: pc_mux_out <= wasnt_br_pc_i + 32'd4;
-            4'b0011: pc_mux_out <= fixed_pc_i;
-            4'b0101: pc_mux_out <= wasnt_br_pc_i + 32'd4;
-            4'b0111: pc_mux_out <= fixed_pc_i;
-            4'b1001: pc_mux_out <= wasnt_br_pc_i + 32'd4;
-            4'b1011: pc_mux_out <= fixed_pc_i;
-            4'b1101: pc_mux_out <= wasnt_br_pc_i + 32'd4;
-            4'b1111: pc_mux_out <= fixed_pc_i;
-            default: pc_mux_out <= 32'bX;
-        endcase
     end
 
     branch_target_buffer BTB(
@@ -176,11 +188,6 @@ module pattern_history_table
         end
     end
 
-//    always @(posedge clock_i) begin
-//        //xored_address <= pc_internal[`TAG_RANGE(ABITS)] ^ ghr;
-//        xored_address <= pc_i[`IDX_RANGE(ABITS)];
-//    end
-    
 endmodule
 
 module branch_target_buffer

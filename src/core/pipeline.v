@@ -328,7 +328,11 @@ module pipeline
         `ifdef RISCV_FORMAL
             if (wasnt_branch_dec_i) begin
                 rvfi_issue_0_o[`RVFI_PC_RDATA]  <= rvfi_dec_0[`RVFI_PC_RDATA];
-                rvfi_issue_0_o[`RVFI_PC_WDATA]  <= rvfi_pc_wdata_f1_i - 4;
+
+                if (pred_dec_0) 
+                    rvfi_issue_0_o[`RVFI_PC_WDATA] <= rvfi_pc_wdata_f1_i;
+                else
+                    rvfi_issue_0_o[`RVFI_PC_WDATA] <= rvfi_pc_wdata_f1_i - 4;
             end else begin
                 rvfi_issue_0_o     <= rvfi_dec_0;
             end
