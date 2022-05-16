@@ -39,12 +39,14 @@ module decode
 
     decoder DECODE0(
         .instruction_i(inst0_i),
+        .pc_i         (pc_0_i),
         .was_fetched_i(was_fetched_0_i),
         .control_o(ctrl0_o)
     );
 
     decoder DECODE1(
         .instruction_i(inst1_i),
+        .pc_i         (pc_1_i),
         .was_fetched_i(was_fetched_1_i),
         .control_o(ctrl1_o)
     );

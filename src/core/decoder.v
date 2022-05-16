@@ -3,6 +3,7 @@
 module decoder
 (
     input       [31:0]              instruction_i,
+    input       [31:0]              pc_i,
     input                           was_fetched_i,
     output wire [`CTRL_BUS]         control_o
 );
@@ -51,14 +52,16 @@ module decoder
             `INST_OR:       precheck_control <= `ALUR_CTRL;
             `INST_AND:      precheck_control <= `ALUR_CTRL;
             // Catch anything else
-            default:        precheck_control <= `INVALID_INST_CTRL;
+            default:        precheck_control <= `ILLEGAL_INST_CTRL;
         endcase
 
         if (   precheck_control[`REGWRITE]     && 
               (instruction_i[`RD_ENC]  == 0)   && 
              !(precheck_control == `JALR_CTRL) &&
              !(precheck_control == `JAL_CTRL )   )
-            postcheck_control <= `INVALID_INST_CTRL;
+            postcheck_control <= 0;
+        else if ( (pc_i & 32'b11) != 0 )
+            postcheck_control <= 0;
         else
             postcheck_control <= precheck_control;
 

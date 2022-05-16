@@ -165,7 +165,7 @@
     - "JAL"
     - "JALR"
     - "COND_BRANCH"
-    - "INVALID"
+    - "ILLEGAL"
   
   operation_codes:
     "ALUI":
@@ -231,6 +231,6 @@
         "ISSUE_PRI":    1
         "ISSUE_SLOT":   0
 
-    "INVALID_INST":
+    "ILLEGAL_INST":
       - opcode:         "XXXXXXX"
-        "INVALID":      1
+        "ILLEGAL":      1

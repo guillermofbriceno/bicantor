@@ -40,7 +40,9 @@ module execute
     output reg  [31:0]        corr_tgt_o,
     output                    corr_taken_o,
     output                    wrong_pred_o,
-    output wire [31:0]        fixed_pc_o
+    output wire [31:0]        fixed_pc_o,
+
+    output                    misaligned_branch_o
 
 `ifdef RISCV_FORMAL
    ,output  wire [04:0]      rvfi_rs1_addr_0_o
@@ -88,6 +90,10 @@ module execute
     reg        in_comparison;
     wire       is_branch_inst;
 
+    wire       update_btb;
+    wire       update_pht;
+    wire       wrong_pred;
+
     assign funct7_0 = ctrl0_i[`FUNCT7_SEL] ? inst0_i[`F7_ENC] : 0;
     assign funct7_1 = ctrl1_i[`FUNCT7_SEL] ? inst1_i[`F7_ENC] : 0;
 
@@ -97,12 +103,18 @@ module execute
     assign alu0_func = {funct7_0, funct3_0};
     assign alu1_func = {funct7_1, funct3_1};
 
-    assign is_branch_inst = ctrl0_i[`COND_BRANCH] || ctrl0_i[`JAL] || ctrl0_i[`JALR];
-    assign update_pht_o   = is_branch_inst;
-    assign corr_taken_o   = (ctrl0_i[`COND_BRANCH] ? in_comparison : 0) || ctrl0_i[`JAL] || ctrl0_i[`JALR];
-    assign update_btb_o   = (corr_tgt_o != pred_tgt_i) && is_branch_inst && corr_taken_o;
-    assign wrong_pred_o   = update_btb_o || ( (corr_taken_o != pred_taken_i) && is_branch_inst );
-    assign fixed_pc_o     = corr_taken_o ? corr_tgt_o : pc_0_i + 4;
+    assign is_branch_inst      = ctrl0_i[`COND_BRANCH] || ctrl0_i[`JAL] || ctrl0_i[`JALR];
+    assign update_pht          = is_branch_inst;
+    assign corr_taken_o        = (ctrl0_i[`COND_BRANCH] ? in_comparison : 0) || ctrl0_i[`JAL] || ctrl0_i[`JALR];
+    assign update_btb          = (corr_tgt_o != pred_tgt_i) && is_branch_inst && corr_taken_o;
+    assign wrong_pred          = update_btb_o || ( (corr_taken_o != pred_taken_i) && is_branch_inst );
+    assign fixed_pc_o          = corr_taken_o ? corr_tgt_o : pc_0_i + 4;
+    assign misaligned_branch_o = is_branch_inst && ( (fixed_pc_o & 32'b11) != 32'b0 ) && corr_taken_o;
+    //assign misaligned_branch_o = is_branch_inst && ( (fixed_pc_o & 32'b11) != 32'b0 );
+
+    assign update_btb_o = update_btb && !misaligned_branch_o;
+    assign update_pht_o = update_pht && !misaligned_branch_o;
+    assign wrong_pred_o = wrong_pred && !misaligned_branch_o;
 
     bypass BYPASS(
         .rs1_exec0_i        (rs1_0_i),
@@ -174,9 +186,9 @@ module execute
         endcase
 
         case({ctrl0_i[`COND_BRANCH], ctrl0_i[`JAL], ctrl0_i[`JALR]})
-            3'b100:  corr_tgt_o <= ( `B_IMM_ENC(inst0_i) + pc_0_i ) & 32'hFFFFFFFC;
-            3'b010:  corr_tgt_o <= ( `J_IMM_ENC(inst0_i) + pc_0_i ) & 32'hFFFFFFFC;
-            3'b001:  corr_tgt_o <= ( `I_IMM_ENC(inst0_i) + alu_in1_0 ) & 32'hFFFFFFFC;
+            3'b100:  corr_tgt_o <= `B_IMM_ENC(inst0_i) + pc_0_i;
+            3'b010:  corr_tgt_o <= `J_IMM_ENC(inst0_i) + pc_0_i;
+            3'b001:  corr_tgt_o <= `I_IMM_ENC(inst0_i) + alu_in1_0;
             default: corr_tgt_o <= 32'bX;
         endcase
     end

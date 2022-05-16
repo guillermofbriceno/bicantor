@@ -75,6 +75,7 @@ module pipeline
     input  wire [31:0] alu_0_exec_i,
     input  wire [31:0] alu_1_exec_i,
     input  wire        exec_wrong_branch_i,
+    input  wire        misaligned_branch_exec_i,
     input  wire        exec_stall_i,
     
     // lsu
@@ -95,6 +96,7 @@ module pipeline
     output reg  [4:0]       rd_addr_1_wb_o = 0,
     output reg  [31:0]      pc_0_wb_o = 0,
     output reg  [31:0]      pc_1_wb_o = 0,
+    output reg              misaligned_branch_wb_o = 0,
     input  wire             wb_stall_i
 
 `ifdef RISCV_FORMAL
@@ -142,8 +144,8 @@ module pipeline
     reg [`RVFI_BUS] rvfi_lsu_1      = 0;
 
     // RVFI Instruction Index/Order Generation
-    wire rvfi_is_0_valid = !ctrl0_dec_i[`INVALID] && !(ctrl0_dec_i == 0);
-    wire rvfi_is_1_valid = !ctrl1_dec_i[`INVALID] && !(ctrl1_dec_i == 0);
+    wire rvfi_is_0_valid = ctrl0_dec_i != 0;
+    wire rvfi_is_1_valid = ctrl1_dec_i != 0;
     reg [63:0] rvfi_order_counter = 0;
 
     // This block is synchronous, acting like a dec/issue pipeline buffer. 
@@ -416,6 +418,7 @@ module pipeline
     reg [31:0] pc_0_lsu;
     reg [31:0] pc_1_lsu;
     wire       lsu_1_sr = exec_wrong_branch_i && (pc_0_exec_o < pc_1_exec_o);
+    reg        misaligned_branch_lsu = 0;
 
     always @(posedge clock_i) begin
         // LSU 0
@@ -424,6 +427,7 @@ module pipeline
             alu_0_lsu_o     <= 0;
             rd_addr_0_lsu_o <= 0;
             pc_0_lsu        <= 0;
+            misaligned_branch_lsu <= 0;
         `ifdef RISCV_FORMAL
             rvfi_lsu_0      <= 0;
         `endif
@@ -432,11 +436,10 @@ module pipeline
             alu_0_lsu_o     <= alu_0_exec_i;
             rd_addr_0_lsu_o <= inst0_exec_o[`RD_ENC];
             pc_0_lsu        <= pc_0_exec_o;
+            misaligned_branch_lsu <= misaligned_branch_exec_i;
         `ifdef RISCV_FORMAL
             // Update RVFI next PC if we mispred
-            if (exec_wrong_branch_i && (pc_0_exec_o < pc_1_exec_o)) begin
-                rvfi_lsu_0[`RVFI_PC_WDATA]  <= rvfi_pc_wdata_f1_i;
-            end else if (exec_wrong_branch_i && (pc_0_exec_o > pc_1_exec_o)) begin
+            if (exec_wrong_branch_i) begin
                 rvfi_lsu_0[`RVFI_PC_WDATA]  <= rvfi_pc_wdata_f1_i;
             end else begin
                 rvfi_lsu_0[`RVFI_PC_WDATA]  <= rvfi_exec_0[`RVFI_PC_WDATA];
@@ -496,6 +499,7 @@ module pipeline
             ctrl0_wb_o      <= 0;
             rd_addr_0_wb_o  <= 0;
             pc_0_wb_o       <= 0;
+            misaligned_branch_wb_o <= 0;
         `ifdef RISCV_FORMAL
             rvfi_wb_0_o     <= 0;
         `endif
@@ -504,6 +508,7 @@ module pipeline
             ctrl0_wb_o      <= ctrl0_lsu_o;
             rd_addr_0_wb_o  <= rd_addr_0_lsu_o;
             pc_0_wb_o       <= pc_0_lsu;
+            misaligned_branch_wb_o <= misaligned_branch_lsu;
         `ifdef RISCV_FORMAL
             rvfi_wb_0_o     <= rvfi_lsu_0;
         `endif

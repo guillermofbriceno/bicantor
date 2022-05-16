@@ -92,6 +92,7 @@ module core
         .dec_flush_i            (f2_flush_ow),
         .dec_stall_i            (dec_stall_ow),
         .pred_taken_1_dec_i     (pred_taken_1_dec_ow),
+        .misaligned_branch_exec_i(misaligned_branch_exec_ow),
 
         // issue
         .inst0_issue_o          (inst0_issue_iw),
@@ -149,6 +150,7 @@ module core
         .rd_addr_1_wb_o         (rd_addr_1_wb_iw),
         .pc_0_wb_o              (pc_0_wb_iw),
         .pc_1_wb_o              (pc_1_wb_iw),
+        .misaligned_branch_wb_o (misaligned_branch_wb_iw),
         .wb_stall_i             (wb_stall_ow)
 
     `ifdef RISCV_FORMAL
@@ -416,7 +418,8 @@ module core
         .corr_tgt_o             (corr_tgt_exec_ow),
         .corr_taken_o           (corr_taken_exec_ow),
         .wrong_pred_o           (wrong_pred_exec_ow),
-        .fixed_pc_o             (fixed_pc_ow)
+        .fixed_pc_o             (fixed_pc_ow),
+        .misaligned_branch_o    (misaligned_branch_exec_ow)
 
     `ifdef RISCV_FORMAL
         ,.rvfi_rs1_addr_0_o     (rvfi_rs1_a_exec_0_ow)
@@ -439,6 +442,7 @@ module core
     wire [31:0]         fixed_pc_ow;
     wire                update_pht_exec_ow;
     wire                update_btb_exec_ow;
+    wire                misaligned_branch_exec_ow;
 
     // pipe
 
@@ -466,6 +470,7 @@ module core
     wire [4:0]          rd_addr_1_wb_iw;
     wire [31:0]         pc_0_wb_iw;
     wire [31:0]         pc_1_wb_iw;
+    wire                misaligned_branch_wb_iw;
 
     writeback WRITEBACK(
         .alu0_out_i (alu_0_wb_iw),
@@ -474,11 +479,16 @@ module core
         .pc_1_i     (pc_1_wb_iw),
         .ctrl_0_i   (ctrl0_wb_iw),
         .ctrl_1_i   (ctrl1_wb_iw),
+        .misaligned_branch_i (misaligned_branch_wb_iw),
         .rd_data0_o (rd_data0_wb_ow),
-        .rd_data1_o (rd_data1_wb_ow)
+        .rd_data1_o (rd_data1_wb_ow),
+        .trap0_o    (trap0_wb_ow),
+        .trap1_o    (trap1_wb_ow)
     );
 
     wire [31:0] rd_data0_wb_ow;
     wire [31:0] rd_data1_wb_ow;
+    wire        trap0_wb_ow;
+    wire        trap1_wb_ow;
 
 endmodule
