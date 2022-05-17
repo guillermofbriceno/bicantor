@@ -16,6 +16,8 @@ module alu
             10'b0100000_101: out <= A_i >>> B_i[4:0];   // SR Arith
             10'b0000000_110: out <= A_i |   B_i;        // OR
             10'b0000000_111: out <= A_i &   B_i;        // AND
+            10'b0000000_010: out <= $signed(A_i) < $signed(B_i);        // SLT
+            10'b0000000_011: out <= A_i <   B_i;        // SLTU
             default        : out <= 0;
         endcase
     end

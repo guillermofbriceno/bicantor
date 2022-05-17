@@ -110,7 +110,6 @@ module execute
     assign wrong_pred          = update_btb_o || ( (corr_taken_o != pred_taken_i) && is_branch_inst );
     assign fixed_pc_o          = corr_taken_o ? corr_tgt_o : pc_0_i + 4;
     assign misaligned_branch_o = is_branch_inst && ( (fixed_pc_o & 32'b11) != 32'b0 ) && corr_taken_o;
-    //assign misaligned_branch_o = is_branch_inst && ( (fixed_pc_o & 32'b11) != 32'b0 );
 
     assign update_btb_o = update_btb && !misaligned_branch_o;
     assign update_pht_o = update_pht && !misaligned_branch_o;
@@ -179,9 +178,9 @@ module execute
             `BEQ:    in_comparison <= (alu_in1_0          == alu_in2_0);
             `BNE:    in_comparison <= (alu_in1_0          != alu_in2_0);
             `BLT:    in_comparison <= ($signed(alu_in1_0)  < $signed(alu_in2_0));
-            `BGE:    in_comparison <= ($signed(alu_in1_0)  > $signed(alu_in2_0));
+            `BGE:    in_comparison <= ($signed(alu_in1_0) >= $signed(alu_in2_0));
             `BLTU:   in_comparison <= (alu_in1_0           < alu_in2_0);
-            `BGEU:   in_comparison <= (alu_in1_0           > alu_in2_0);
+            `BGEU:   in_comparison <= (alu_in1_0          >= alu_in2_0);
             default: in_comparison <= 0;
         endcase
 

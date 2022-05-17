@@ -85,6 +85,7 @@ module pipeline
     output reg  [`CTRL_BUS] ctrl1_lsu_o = 0,
     output reg  [4:0]       rd_addr_0_lsu_o = 0,
     output reg  [4:0]       rd_addr_1_lsu_o = 0,
+    output reg              misaligned_branch_lsu_o = 0,
     input  wire             mem_stall_i,
 
     // wb
@@ -418,7 +419,6 @@ module pipeline
     reg [31:0] pc_0_lsu;
     reg [31:0] pc_1_lsu;
     wire       lsu_1_sr = exec_wrong_branch_i && (pc_0_exec_o < pc_1_exec_o);
-    reg        misaligned_branch_lsu = 0;
 
     always @(posedge clock_i) begin
         // LSU 0
@@ -427,7 +427,7 @@ module pipeline
             alu_0_lsu_o     <= 0;
             rd_addr_0_lsu_o <= 0;
             pc_0_lsu        <= 0;
-            misaligned_branch_lsu <= 0;
+            misaligned_branch_lsu_o <= 0;
         `ifdef RISCV_FORMAL
             rvfi_lsu_0      <= 0;
         `endif
@@ -436,7 +436,7 @@ module pipeline
             alu_0_lsu_o     <= alu_0_exec_i;
             rd_addr_0_lsu_o <= inst0_exec_o[`RD_ENC];
             pc_0_lsu        <= pc_0_exec_o;
-            misaligned_branch_lsu <= misaligned_branch_exec_i;
+            misaligned_branch_lsu_o <= misaligned_branch_exec_i;
         `ifdef RISCV_FORMAL
             // Update RVFI next PC if we mispred
             if (exec_wrong_branch_i) begin
@@ -508,7 +508,7 @@ module pipeline
             ctrl0_wb_o      <= ctrl0_lsu_o;
             rd_addr_0_wb_o  <= rd_addr_0_lsu_o;
             pc_0_wb_o       <= pc_0_lsu;
-            misaligned_branch_wb_o <= misaligned_branch_lsu;
+            misaligned_branch_wb_o <= misaligned_branch_lsu_o;
         `ifdef RISCV_FORMAL
             rvfi_wb_0_o     <= rvfi_lsu_0;
         `endif

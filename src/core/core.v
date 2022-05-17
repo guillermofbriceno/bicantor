@@ -139,6 +139,7 @@ module core
         .ctrl1_lsu_o            (ctrl1_lsu_iw),
         .rd_addr_0_lsu_o        (rd_addr_0_lsu_iw),
         .rd_addr_1_lsu_o        (rd_addr_1_lsu_iw),
+        .misaligned_branch_lsu_o(misaligned_branch_lsu_iw),
         .mem_stall_i            (mem_stall_ow),
 
         // wb
@@ -312,7 +313,7 @@ module core
 
         .rd_addr0_i             (rd_addr_0_wb_iw),
         .rd_data0_i             (rd_data0_wb_ow),
-        .rd_write0_i            (ctrl0_wb_iw[`REGWRITE]),
+        .rd_write0_i            (ctrl0_wb_iw[`REGWRITE] && !misaligned_branch_wb_iw),
 
         .rd_addr1_i             (rd_addr_1_wb_iw),
         .rd_data1_i             (rd_data1_wb_ow),
@@ -392,12 +393,12 @@ module core
         .rs1_1_i                (rs1_data1_exec_iw),
         .rs2_1_i                (rs2_data1_exec_iw),
 
-        .wm0_i                  (ctrl0_lsu_iw[`REGWRITE]),
+        .wm0_i                  (ctrl0_lsu_iw[`REGWRITE] && !misaligned_branch_lsu_iw),
         .am0_i                  (rd_addr_0_lsu_iw),
         .wm1_i                  (ctrl1_lsu_iw[`REGWRITE]),
         .am1_i                  (rd_addr_1_lsu_iw),
 
-        .ww0_i                  (ctrl0_wb_iw[`REGWRITE]),
+        .ww0_i                  (ctrl0_wb_iw[`REGWRITE] && !misaligned_branch_wb_iw),
         .aw0_i                  (rd_addr_0_wb_iw),
         .ww1_i                  (ctrl1_wb_iw[`REGWRITE]),
         .aw1_i                  (rd_addr_1_wb_iw),
@@ -452,6 +453,7 @@ module core
     wire [`CTRL_BUS]    ctrl1_lsu_iw;
     wire [4:0]          rd_addr_0_lsu_iw;
     wire [4:0]          rd_addr_1_lsu_iw;
+    wire                misaligned_branch_lsu_iw;
 
     lsu LSU(
         .alu0_out_i (alu_0_lsu_iw),
