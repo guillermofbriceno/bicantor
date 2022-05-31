@@ -12,7 +12,7 @@ module core
     output wire         imem_sr_o,
 
     output wire [09:0]  data_addr0_o,
-    output wire [09:0]  data_addr_o,
+    output wire [09:0]  data_addr_o
 
 `ifdef RISCV_FORMAL
     `BICANTOR_RVFI_IO

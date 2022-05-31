@@ -1,4 +1,4 @@
-module simple_imem 
+module simple_dmem 
 (
     input               clock_i,
 
