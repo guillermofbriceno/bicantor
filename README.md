@@ -14,7 +14,7 @@ The branch prediction engine uses a branch-target-buffer and G-share direction p
 There are two test systems used, pre-synthesis quicktests found in `tests/quicktests` and formal verification using `riscv-formal`. Quicktests are hand-made for sanity checking during development, checking common weakpoints in dependency and branching logic to ensure the execution flow remains relatively sound. 
 
 #### RISC-V Formal
-RISC-V formal tests take a few hours to run depending on depth. The `checks.cfg` is set to prove mode with an `nret` of 2, and a `depth` of 20. A sample output of a successful run on the `and` instruction on channel `0`:
+RISC-V formal tests take a few hours to run depending on depth. The `checks.cfg` is set to prove mode with an `nret` of 2, and a `depth` of 20. A sample output of a successful run on the `and` instruction on channel `1`:
 ```
 SBY  0:36:05 [insn_and_ch1] engine_0.basecase: ##   0:00:00  Checking assumptions in step 20..
 SBY  0:36:05 [insn_and_ch1] engine_0.induction: ##   0:00:00  Trying induction in step 1..
