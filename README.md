@@ -9,6 +9,7 @@ This core was a challenge in implementing more advanced microarchitectural princ
 The branch prediction engine uses a branch-target-buffer and G-share direction predictor. Only the first issue can process branches. In the fetch stage, two instructions are read simultaneously, moving on to decode and issue stages which will resolve issue-based dependencies by swapping or halting one of the issue pipelines for a single cycle. Execution includes full bypassing for both issues, and the core requires a quad-read, dual-write register file.
 
 ![Prototype Logisim Model](https://github.com/guillermofbriceno/bicantor/blob/main/docs/design_notes/core_prototype_model.png?raw=true)
+Prototype Logisim model, does not implement all stages and dependency logic.
 
 ### Tests
 There are two test systems used, pre-synthesis quicktests found in `tests/quicktests` and formal verification using `riscv-formal`. Quicktests are hand-made for sanity checking during development, checking common weakpoints in dependency and branching logic to ensure the execution flow remains relatively sound. 
